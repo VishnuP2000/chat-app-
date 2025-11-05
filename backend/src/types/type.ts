@@ -1,0 +1,15 @@
+export interface AuthResponse {
+  message: string;
+  success: boolean;
+  token?: string;
+  email?: string;
+  otp?: string;
+}
+export interface SignInResult extends AuthResponse {
+  accessToken?: string;
+  refreshToken?: string;
+  fullName?: string;
+  role?: string;
+  userId?: string;
+  pic?: string;
+}
