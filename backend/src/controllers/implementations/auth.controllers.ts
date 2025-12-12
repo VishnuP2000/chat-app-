@@ -4,9 +4,12 @@ import { IAuthService } from "../../services/interface/auth/auth.Iservice";
 import { authService } from "../../services/implementations/auth/auth.service";
 import { registerSchema, signInSchema } from "../../validations/user.Zvalidations";
 import { HttpStatus } from "../../enum/httpStatus";
-import { success } from "zod";
+import {  success } from "zod";
 import { setCookies } from "../../utils/cookies.utils";
 import { AppError } from "../../utils/customError";
+import jwt from "jsonwebtoken";
+
+
 @Service()
 export class AuthControllers {
   private authservice: IAuthService;
@@ -15,7 +18,7 @@ export class AuthControllers {
   }
   async signUp(req: Request, res: Response): Promise<Response> {
     try {
-      console.log('res',req.body)
+      console.log('requu',req.body)
       const validationCheck = registerSchema.safeParse(req.body);
       if (!validationCheck.success) {
         return res.status(HttpStatus.BAD_REQUEST).json({
@@ -27,16 +30,26 @@ export class AuthControllers {
       const response = await this.authservice.signUp(req.body);
       console.log('res',response)
 
-      return res.status(201).json(response); // <- IMPORTANT
+      return res.status(201).json({response}); // <- IMPORTANT
     } catch (error) {
-      return res.status(500).json({error, message: "something wrong" });
+      // return res.status(500).json({error, message: "something wrong" });
+      if (error instanceof AppError) {
+        return res
+          .status(error.statusCode)
+          .json({ message: error.message, success: false });
+      }
+      console.error("Error in signup:", error);
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: "Internal server error" });
     }
   }
   async signIn(req:Request,res:Response):Promise<Response>{
     try {
-      console.log('third')
+       const { email, password } = req.body;
+      console.log(' email, password', email, password)
       const signInValidation = signInSchema.safeParse(req.body)
-      console.log('fourth',signInValidation)
+      console.log('signInValidation',signInValidation)
       if(!signInValidation.success){
         return res.status(HttpStatus.BAD_REQUEST).json({
           success:false,
@@ -45,7 +58,7 @@ export class AuthControllers {
 
       }
 
-      const response=await this.authservice.signIn(req.body)
+      const response=await this.authservice.signIn({email, password})
      
  console.log('eigth')
       setCookies(res, "refreshToken", String(response.refreshToken));
@@ -56,10 +69,6 @@ export class AuthControllers {
       success: true,
       message: "Sign in successfully completed",
       accessToken: response.accessToken,
-      userId: response.userId,
-      fullName: response.fullName,
-      email: response.email,
-      role: response.role,
     });
    
   }catch(error){
@@ -70,6 +79,27 @@ export class AuthControllers {
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal server error" });
   }
 }
+  async refreshToken(req: Request, res: Response) {
+    try {
+      const token = req.cookies.refreshToken;
+      console.log('token',token)
+      if (!token) {
+        throw new AppError("Refresh token missing", 401);
+      }
+
+      const decoded = jwt.verify(token, process.env.REFRESH_TOKEN!) as any;
+
+      const newAccessToken = jwt.sign(
+        { id: decoded.id },
+        process.env.ACCESS_TOKEN!,
+        { expiresIn: "15m" }
+      );
+
+      return res.status(200).json({ accessToken: newAccessToken });
+    } catch (error) {
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+  }
 }
 
 

@@ -25,6 +25,7 @@ export class AuthService implements IAuthService {
       const existUser = await this.userRepo.findUserByEmail(email);
 
       if (existUser) {
+        console.log('existUser is already exist')
         throw new AppError(
           "User already registered with this email , Please login...",
           HttpStatus.BAD_REQUEST
