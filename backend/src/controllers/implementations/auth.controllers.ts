@@ -20,6 +20,8 @@ export class AuthControllers {
     try {
       console.log('requu',req.body)
       const validationCheck = registerSchema.safeParse(req.body);
+     
+
       if (!validationCheck.success) {
         return res.status(HttpStatus.BAD_REQUEST).json({
           success: false,
@@ -27,10 +29,11 @@ export class AuthControllers {
         });
       }
 
+      console.log('after complate validations')
       const response = await this.authservice.signUp(req.body);
       console.log('res',response)
 
-      return res.status(201).json({response}); // <- IMPORTANT
+      return res.status(201).json({data:response}); // <- IMPORTANT
     } catch (error) {
       // return res.status(500).json({error, message: "something wrong" });
       if (error instanceof AppError) {
