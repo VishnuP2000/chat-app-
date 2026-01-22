@@ -11,6 +11,7 @@ import chatImage from "../assets/chat.png";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion, AnimatePresence } from "framer-motion";
+import { signInRequest } from "@/service/Api/auth.userApi";
 
 const LabelInputContainer = ({children,className,}: {children: React.ReactNode;className?: string;}): JSX.Element => (
   <div className={cn("mb-3 flex w-full flex-col space-y-2", className)}>
@@ -45,9 +46,7 @@ function LoginPage(): JSX.Element {
     return newErrors;
   };
 
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     const validationErrors = validate();
     setErrors(validationErrors);
@@ -55,7 +54,8 @@ function LoginPage(): JSX.Element {
 
     try {
       const payload = { email: form.email, password: form.password };
-      const response = await publicAxios.post("/user/signIn", payload);
+      const response = await signInRequest(payload);
+      console.log('accs++++++',response.data.accessToken)
       localStorage.setItem("access-token", response.data.accessToken);
       if (response.data.success) navigate("/dashboard");
       else toast.error(response.data.message || "Invalid credentials");
@@ -160,6 +160,7 @@ function LoginPage(): JSX.Element {
                     id="email"
                     type="email"
                     placeholder="Email"
+                    autoComplete="email"
                     value={form.email}
                     onChange={handleChange}
                     className="rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-300/60 shadow-sm transition focus:border-purple-400 focus:ring-purple-400"
@@ -183,6 +184,7 @@ function LoginPage(): JSX.Element {
                     id="password"
                     type="password"
                     placeholder="Password"
+                    autoComplete="current-password"
                     value={form.password}
                     onChange={handleChange}
                     className="rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-300/60 shadow-sm transition focus:border-purple-400 focus:ring-purple-400"

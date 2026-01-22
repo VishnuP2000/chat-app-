@@ -1,0 +1,138 @@
+// backend/src/controllers/implementations/chat.controllers.ts
+import Container, { Service } from "typedi";
+import { Request, Response } from "express";
+import { chatService } from "../../services/implementations/chat/chat.service";
+import { IChatService } from "../../services/interface/chat/chat.IService";
+import jwt from "jsonwebtoken";
+import { AppError } from "../../utils/customError";
+import { HttpStatus } from "../../enum/httpStatus";
+import { AuthRequset } from "../../Interfaces/Interfaces";
+
+@Service()
+export class ChatControllers {
+  private chatservice: IChatService;
+  constructor() {
+    this.chatservice = chatService;
+  }
+
+  async getUsers(req: Request, res: Response) {
+    try {
+      console.log("hello");
+      const users = await this.chatservice.getAllUsers();
+      console.log("get users");
+      return res.status(200).json({
+        success: true,
+        users,
+      });
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch users",
+      });
+    }
+  }
+
+  async chatUsers(req: Request, res: Response) {
+    try {
+      console.log('chatUsers')
+      const { userMail } = req.body;
+      console.log('req.body',userMail)
+      if (!userMail) {
+        return res
+          .status(400)
+          .json({ message: "userMail is required", success: false });
+      }
+
+      // Extract current user ID from JWT token
+      const token = req.headers.authorization?.replace("Bearer ", "");
+      if (!token) {
+        return res
+          .status(401)
+          .json({ message: "Unauthorized", success: false });
+      }
+
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!) as {
+        user: { id: string };
+      };
+
+      console.log("decoded.user", decoded.user);
+      const currentUserId = decoded.user.id;
+
+      console.log("currentUserId", currentUserId);
+      console.log("userMail", userMail);
+
+      const chat = await this.chatservice.createOrGetChat({
+        userMail,
+        currentUserId,
+      });
+      console.log("chatcontroller", chat);
+
+      return res.status(200).json({
+        success: true,
+        data: chat.data,
+      });
+    } catch (error) {
+      console.log("err", error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          success: false,
+          message: error.message,
+        });
+      }
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async getChatUsers(req: AuthRequset, res: Response) {
+    try {
+      console.log('getMessage')
+      const { chatId } = req.params;
+      console.log('controller chatId',chatId)
+
+      const chatData = await this.chatservice.dataFetch(chatId);
+
+      console.log('chatData',chatData.data)
+
+      return res.status(200).json({
+        success: true,
+        message:'',
+        data: chatData,
+      });
+    } catch (error) { 
+      console.log(error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch messages" });
+    }
+  }
+
+  async getAllChats(req: AuthRequset, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const chats = await this.chatservice.getAllChatsByUserId(userId);
+      return res.status(200).json({
+        success: true,
+        data: chats,
+      });
+    } catch (error) {
+      console.error("Error fetching all chats:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch chats",
+      });
+    }
+  }
+}
+
+export const chatControllers = Container.get(ChatControllers);

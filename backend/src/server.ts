@@ -4,6 +4,11 @@ import express,{Request,Response} from "express";
 import dotenv from "dotenv";
 import userRouter from "./routes/userRouter";
 import { connectDB } from "./config/db";
+import chatRouter from "./routes/chatRouter";
+import messageRouter from "./routes/messageRouter";
+import "./models/chat.modal"
+import "./models/message.modal"
+import "./models/user.model"
 
 console.log('enter to server.ts')
 const app = express();
@@ -20,9 +25,11 @@ app.use(express.urlencoded({ extended: true }));
 
 console.log('first')
 app.use("/user", userRouter);
+app.use("/chat", chatRouter);
+app.use("/message", messageRouter);
 
-app.use((req:Request, res:Response) => {   // if the router is not match the userRouter so immidiatly working app.use((req,res)=>) 'hello', 
-  res.send("router is not exist ");       // if the router is match the userRouter so it will not work
+app.use((req:Request, res:Response) => { 
+  res.send("router is not exist ");       
 });
 app.listen(process.env.PORT, () => {
   console.log("server started");

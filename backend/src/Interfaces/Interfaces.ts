@@ -1,3 +1,6 @@
+import { Request } from "express";
+import { IChat } from "../models/chat.modal";
+
 export interface AuthResponse {
   message: string;
   success: boolean;
@@ -12,4 +15,15 @@ export interface SignInResult extends AuthResponse {
   role?: string;
   userId?: string;
   pic?: string;
+}
+export interface giveChatResult{
+  message:string,
+  success: boolean;
+  data:IChat
+}
+
+export interface AuthRequset extends Request {
+  user?: {
+    id: string;
+  };
 }

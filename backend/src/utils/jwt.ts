@@ -37,14 +37,14 @@ export const generateRefreshToken = (user: object): string => {
  * @param token - JWT access token string
  * @returns Decoded payload if valid, otherwise null
  */
-export const verifyAccessToken = (token: string) => {
-  try {
-    return jwt.verify(token, process.env.ACCESS_TOKEN as string);
-  } catch (error) {
-    console.log("error", error);
-    return null;
-  }
-};
+// export const verifyAccessToken = (token: string) => {
+//   try {
+//     return jwt.verify(token, process.env.ACCESS_TOKEN as string);
+//   } catch (error) {
+//     console.log("error", error);
+//     return null;
+//   }
+// };
 export const verifyRefreshToken = (token: string) => {
   try {
     return jwt.verify(token, process.env.REFRESH_TOKEN as string);

@@ -2,25 +2,30 @@ import Container, { Service } from "typedi";
 import { Request, response, Response } from "express";
 import { IAuthService } from "../../services/interface/auth/auth.Iservice";
 import { authService } from "../../services/implementations/auth/auth.service";
-import { registerSchema, signInSchema } from "../../validations/user.Zvalidations";
+import {
+  registerSchema,
+  signInSchema,
+} from "../../validations/user.Zvalidations";
 import { HttpStatus } from "../../enum/httpStatus";
-import {  success } from "zod";
+import { success } from "zod";
 import { setCookies } from "../../utils/cookies.utils";
 import { AppError } from "../../utils/customError";
 import jwt from "jsonwebtoken";
-
+import { chatService } from "../../services/implementations/chat/chat.service";
+import { IChatService } from "../../services/interface/chat/chat.IService";
 
 @Service()
 export class AuthControllers {
   private authservice: IAuthService;
+  // private chatservice: IChatService;
   constructor() {
     this.authservice = authService;
+    // this.chatservice = chatService;
   }
   async signUp(req: Request, res: Response): Promise<Response> {
     try {
-      console.log('requu',req.body)
+      console.log("requu", req.body);
       const validationCheck = registerSchema.safeParse(req.body);
-     
 
       if (!validationCheck.success) {
         return res.status(HttpStatus.BAD_REQUEST).json({
@@ -29,11 +34,11 @@ export class AuthControllers {
         });
       }
 
-      console.log('after complate validations')
+      console.log("after complate validations");
       const response = await this.authservice.signUp(req.body);
-      console.log('res',response)
+      console.log("res", response);
 
-      return res.status(201).json({data:response}); // <- IMPORTANT
+      return res.status(201).json({ data: response }); // <- IMPORTANT
     } catch (error) {
       // return res.status(500).json({error, message: "something wrong" });
       if (error instanceof AppError) {
@@ -47,45 +52,47 @@ export class AuthControllers {
         .json({ success: false, message: "Internal server error" });
     }
   }
-  async signIn(req:Request,res:Response):Promise<Response>{
+  async signIn(req: Request, res: Response): Promise<Response> {
     try {
-       const { email, password } = req.body;
-      console.log(' email, password', email, password)
-      const signInValidation = signInSchema.safeParse(req.body)
-      console.log('signInValidation',signInValidation)
-      if(!signInValidation.success){
+      const { email, password } = req.body;
+      console.log(" email, password", email, password);
+      const signInValidation = signInSchema.safeParse(req.body);
+      console.log("signInValidation", signInValidation);
+      if (!signInValidation.success) {
         return res.status(HttpStatus.BAD_REQUEST).json({
-          success:false,
-          message:signInValidation.error
-        })
-
+          success: false,
+          message: signInValidation.error,
+        });
       }
 
-      const response=await this.authservice.signIn({email, password})
-     
- console.log('eigth')
+      const response = await this.authservice.signIn({ email, password });
+
+      console.log("eigth");
       setCookies(res, "refreshToken", String(response.refreshToken));
 
-      console.log('suceeeeeeeeee')
+      console.log("suceeeeeeeeee");
 
-    return res.status(HttpStatus.OK).json({
-      success: true,
-      message: "Sign in successfully completed",
-      accessToken: response.accessToken,
-    });
-   
-  }catch(error){
-    if(error instanceof AppError){
-      return res.status(error.statusCode).json({message:error.message,success:false})
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: "Sign in successfully completed",
+        accessToken: response.accessToken,  
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        return res
+          .status(error.statusCode)
+          .json({ message: error.message, success: false });
+      }
+      console.log("signin error", error);
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: "Internal server error" });
     }
-    console.log('signin error',error)
-          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal server error" });
   }
-}
   async refreshToken(req: Request, res: Response) {
     try {
       const token = req.cookies.refreshToken;
-      console.log('token',token)
+      console.log("token", token);
       if (!token) {
         throw new AppError("Refresh token missing", 401);
       }
@@ -103,7 +110,42 @@ export class AuthControllers {
       return res.status(401).json({ message: "Invalid refresh token" });
     }
   }
-}
+  // async getUsers(req: Request, res: Response) {
+  //   try {
+  //     console.log('hello')
+  //     const users = await this.chatservice.getAllUsers();
+  //     console.log('get uusers')
+  //     return res.status(200).json({
+  //       success: true,
+  //       users
+  //     });
+  //   } catch {
+  //     return res.status(500).json({
+  //       success: false,
+  //       message: "Failed to fetch users"
+  //     });
+  //   }
+  // }
+  // // backend/src/controllers/implementations/auth.controllers.ts
+  // async chatUsers(req: Request, res: Response) {
+  //   try {
+  //     const { userMail } = req.body;
+  //     if (!userMail) {
+  //       return res.status(400).json({ message: "userMail is required", success: false });
+  //     }
 
+  //     const Cchat = await this.chatservice.createOrGetChat({ userMail });
+  //     console.log('cchat',Cchat)
+
+  //     return res.status(200).json({
+  //       success: true,
+  //       data: Cchat,
+  //     });
+  //   } catch (error) {
+  //     console.log("err", error);
+  //     return res.status(500).json({ success: false, message: "Internal server error" });
+  //   }
+  // }
+}
 
 export const authControllers = Container.get(AuthControllers);

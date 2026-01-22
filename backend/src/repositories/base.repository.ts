@@ -1,12 +1,10 @@
 import { Document, Model } from "mongoose";
 import { IRepository } from "./interface/base.Irepository";
-import { Service } from "typedi";
+import Container, { Service } from "typedi";
 import { IUser } from "../models/user.model";
 
 @Service()
-export abstract class BaseRepository<T extends Document>
-  implements IRepository<T>
-{
+export abstract class BaseRepository<T extends Document> implements IRepository<T>{
   protected model: Model<T>;
 
   constructor(model: Model<T>) {
@@ -30,6 +28,7 @@ export abstract class BaseRepository<T extends Document>
 
   async findById(id: string): Promise<T | null> {
     try {
+      console.log('base findById')
       const result = await this.model.findById(id).exec();
       if (!result) throw new Error(`No record found with ID: ${id}`);
       return result;
@@ -85,3 +84,4 @@ export abstract class BaseRepository<T extends Document>
     }
   }
 }
+

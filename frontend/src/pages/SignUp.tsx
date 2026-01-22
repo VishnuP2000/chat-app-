@@ -11,6 +11,7 @@ import chatImage from "../assets/chat.png";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion, AnimatePresence } from "framer-motion";
+import { signUpRequest } from "@/service/Api/auth.userApi";
 
 const LabelInputContainer = ({
   children,
@@ -76,10 +77,10 @@ function SignUpPage(): JSX.Element {
         password: form.password,
         confirmPassword:form.confirmPassword
       };
-      const response = await publicAxios.post("/user/signUp", payload);
+      const response = await signUpRequest(payload);
       console.log(response)
       // localStorage.setItem("access-token", response.data.accessToken);
-      if (response.data.data.success) navigate("/dashboard");
+      if (response.data.data.success) navigate("/sign-in");
       else toast.error(response.data.data.message || "Sign up failed");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Something went wrong");

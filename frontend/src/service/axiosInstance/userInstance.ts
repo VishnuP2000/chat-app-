@@ -1,5 +1,7 @@
 import axios from "axios";
 
+
+
 const API_URL = import.meta.env.VITE_USER_BASE_URL;
 
 // ---------------- Public instance (no access token needed) ----------------
@@ -17,6 +19,7 @@ export const privateAxios = axios.create({
 // ---------------- Request Interceptor ----------------
 privateAxios.interceptors.request.use((config) => {
   const token = localStorage.getItem("access-token");
+  console.log('privetAxios instance',token)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
