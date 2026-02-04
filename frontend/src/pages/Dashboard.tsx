@@ -20,9 +20,13 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { usersChatAdd, usersChatFetch, usersFetch } from "@/service/Api/chatApi";
-import { IChat, IChatRoom, IUser } from "@/types/chat";
-import { getMessage } from "@/service/Api/messageApi";
+import {
+  usersChatAdd,
+  usersChatFetch,
+  usersFetch,
+} from "@/service/Api/chatApi";
+import { IChat, IChatRoom, IMessage, IUser } from "@/types/chat";
+import { clickUser, sendMessage } from "@/service/Api/messageApi";
 
 interface Chat extends IChatRoom {
   name?: string;
@@ -32,7 +36,7 @@ interface Chat extends IChatRoom {
   isOnline?: boolean;
 }
 
-interface Message {
+interface UIMessage {
   id: string;
   text: string;
   sender: "me" | "other";
@@ -40,51 +44,49 @@ interface Message {
   avatar?: string;
 }
 
-
-
 const Dashboard = (): JSX.Element => {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  console.log('selectedChat',selectedChat)
+  // console.log('selectedChat',selectedChat)
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-  const [users, setUsers] = useState<IUser[]>([]);   //   fetch full loged data 
-  console.log('users',users)
+  const [users, setUsers] = useState<IUser[]>([]); //   fetch full loged data
+  // console.log('users',users)
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [userSearch, setUserSearch] = useState("");
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
+
   console.log("messages", messages);
 
-  const [resChatUsers,setResChatUsers]=useState<IChat|null>(null);
-   useEffect(() => {
-    console.log("resChatUsers updated:", resChatUsers);
-  }, [resChatUsers]);
+  const [resChatUsers, setResChatUsers] = useState<IChat | null>(null);
+  // useEffect(() => {
+  //   setMessages()
+  // }, []);
   /* add the database chat users in the chattUser after click the fetching function */
   const [chattUser, setChattUser] = useState<Chat[]>([]);
   console.log("chatttts", chattUser);
-  useEffect(()=>{
-    console.log('demochat',chattUser)
-  },[chattUser])
+  // useEffect(()=>{
+  //   console.log('demochat',chattUser)
+  // },[chattUser])
 
   /*--------------------Fetching Users for Listing------------------------*/
 
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      
 
       // const token = localStorage.getItem("access-token");
 
       const res = await usersFetch();
-      console.log('res',res)
-      console.log('res.data.users',res)
+      console.log("res", res);
+      console.log("res.data.users", res);
       setUsers(res);
     } catch (error) {
       toast.error("Failed to load users");
@@ -106,17 +108,17 @@ const Dashboard = (): JSX.Element => {
     }, 3000);
   };
 
-const selectedChatData = chattUser.find((chat) => chat._id === selectedChat);
-console.log('selectedChatData',selectedChatData)
+  const selectedChatData = chattUser.find((chat) => chat._id === selectedChat);
+  // console.log('selectedChatData',selectedChatData)
 
-/*-----------------Load all chats on mount-------------------*/
+  /*-----------------Load all chats on mount-------------------*/
 
   // useEffect(() => {
   //   const loadAllChats = async () => {
   //     try {
   //       const allChats = await getAllChats();
   //       console.log("All chats loaded:", allChats);
-        
+
   //       // Transform backend chat data to Chat interface with user names
   //       // The backend should return chats with populated users
   //       const transformedChats: Chat[] = allChats.map((chatRoom: any) => {
@@ -128,7 +130,7 @@ console.log('selectedChatData',selectedChatData)
   //           const otherUser = chatRoom.users.find((u: any) => typeof u === 'object' && u.name) || chatRoom.users[0];
   //           otherUserName = otherUser?.name || otherUser?.email || "Unknown User";
   //         }
-          
+
   //         return {
   //           ...chatRoom,
   //           name: otherUserName,
@@ -137,36 +139,31 @@ console.log('selectedChatData',selectedChatData)
   //           unread: chatRoom.userUnreadCount || 0,
   //         };
   //       });
-        
+
   //       setChattUser(transformedChats);
   //     } catch (error) {
   //       console.error("Failed to load chats:", error);
   //     }
   //   };
-    
+
   //   loadAllChats();
   // }, []);
 
-/*-----------------add chat users in the database --------------------*/
+  /*-----------------add chat users in the database --------------------*/
 
   const addChatUsers = async (userMail: string) => {
     try {
-      console.log('userMail',userMail)
-      const res = await usersChatAdd(userMail)
-
-      const chat = res;
-      if (!chat) return;
+      console.log("userMail", userMail);
+      const chat = await usersChatAdd(userMail);
       console.log("chat data", chat);
-      
+      if (!chat) return;
+
       // Find the user from the users list to get their name
       const user = users.find((u) => u.email === userMail);
-      
+      console.log("user", user);
       setChattUser((prev) => {
         if (prev.some((c) => c._id === chat._id)) return prev;
-        return [...prev, {
-          ...chat,
-          name: user?.name || "Unknown User",
-        }];
+        return [...prev, { ...chat, name: user?.name || "Unknown User" }];
       });
       setSelectedChat(chat._id);
       setShowNewChat(false);
@@ -181,12 +178,12 @@ console.log('selectedChatData',selectedChatData)
   const fetchChatUsers = async (chatId: string) => {
     try {
       // const token = localStorage.getItem("access-token");
-      console.log('chatId',chatId)
-      
+      console.log("chatId", chatId);
+
       const res = await usersChatFetch(chatId);
-      console.log('resssss',res)
+      console.log("resssss", res);
       setResChatUsers(res);
-      
+
       // Update the chat in chattUser with user information
       if (res && res.users && res.users.length > 0) {
         setChattUser((prev) =>
@@ -202,48 +199,82 @@ console.log('selectedChatData',selectedChatData)
               };
             }
             return chat;
-          })
+          }),
         );
       }
-      
+
       // setMessages(res as unknown as Message[]);
     } catch (error) {
       console.error("Failed to fetch messages", error);
     }
   };
 
+  // when i click the user's pass the _id in the backend and fetch the specific user message
+
   const fetchMessage = async (chatId: string) => {
     try {
-      console.log('fetchMessage',chatId)
-      const res = await getMessage(chatId)
+      console.log("fetchMessage", chatId);
+      const res = await clickUser(chatId);
+      const uiMessages: UIMessage[] = res.messages.map(mapIMessageToUIMessage);
+      console.log("uiMessages", uiMessages);
+
+      setMessages(uiMessages);
     } catch (error) {
-      console.error('it is fetchMessage error',error)
+      console.error("it is fetchMessage error", error);
     }
-  }
-
-const handleSendMessage = async () => {
-  if (!messageInput.trim() || !selectedChat) return;
-
-  setIsSending(true);
-
-  const newMessage: Message = {
-    id: `${Date.now()}`,
-    text: messageInput.trim(),
-    sender: "me",
-    timestamp: new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
   };
 
-  setMessages((prev) => [...prev, newMessage]);
-  setMessageInput("");
-  setIsSending(false);
-};
+  const formatTime = (date: string) =>
+    new Date(date).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const mapIMessageToUIMessage = (msg: IMessage): UIMessage => {
+    return {
+      id: msg._id ?? msg.id,
+      text: msg.content,
+      sender: msg.senderType === "user" ? "me" : "other",
+      timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !selectedChat) return;
+
+    try {
+      setIsSending(true);
+      console.log("handleSendMessage");
+      const messageDatas = await sendMessage({
+        chatId: selectedChat,
+        content: messageInput.trim(),
+      });
+      console.log("messageDatas", messageDatas);
+      console.log("messageDatas", messageDatas.messages);
+      // console.log('messageDatas',messageDatas)
+
+      if (!messageDatas) return;
+
+      // const uiMessage = mapIMessageToUIMessage(messageDatas);
+      const latestMessage =
+      messageDatas.messages[messageDatas.messages.length-1];
+
+
+      setMessages((prev) => [...prev,mapIMessageToUIMessage(latestMessage),]);
+      setMessageInput("");
+    } catch (error) {
+      console.error("Failed to send message", error);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      console.log('handleKeyPresssss')
+      console.log("handleKeyPresssss");
       e.preventDefault();
       handleSendMessage();
     }
@@ -253,10 +284,9 @@ const handleSendMessage = async () => {
     scrollToBottom();
   }, [messages, selectedChat]);
 
-const filteredChats = chattUser.filter(
-  (chat) =>
-    chat.name?.toLowerCase().includes(searchQuery.toLowerCase())
-);
+  const filteredChats = chattUser.filter((chat) =>
+    chat.name?.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-linear-to-br from-slate-950 via-indigo-950 to-purple-900 text-white">
@@ -353,7 +383,6 @@ const filteredChats = chattUser.filter(
                         Close
                       </button>
                     </div>
-
                     <div className="mt-4">
                       <div className="relative">
                         <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -366,13 +395,12 @@ const filteredChats = chattUser.filter(
                         />
                       </div>
                     </div>
-
                     <div className="mt-4 max-h-72 overflow-y-auto">
                       {users
                         .filter((u) =>
                           u.name
                             .toLowerCase()
-                            .includes(userSearch.toLowerCase())
+                            .includes(userSearch.toLowerCase()),
                         )
                         .map((u) => (
                           <button
@@ -383,8 +411,7 @@ const filteredChats = chattUser.filter(
                               if (!chat) return;
                               fetchChatUsers(chat._id);
                               setSelectedChat(chat._id);
-                                setShowNewChat(false);
-                              
+                              setShowNewChat(false);
                             }}
                           >
                             <div className="flex items-center gap-3">
@@ -437,7 +464,7 @@ const filteredChats = chattUser.filter(
                     transition={{ delay: index * 0.05 }}
                     onClick={() => {
                       setSelectedChat(chat._id);
-                      fetchMessage(chat._id)
+                      fetchMessage(chat._id);
                     }}
                     className={`group relative flex cursor-pointer items-center gap-3 border-b border-white/5 p-4 transition ${
                       selectedChat === chat._id
@@ -489,7 +516,7 @@ const filteredChats = chattUser.filter(
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className="flex items-center justify-between border-b border-white/10 bg-white/5 p-4 backdrop-blur-xl"
-              >
+            >
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-indigo-400 text-sm font-semibold">
@@ -527,23 +554,23 @@ const filteredChats = chattUser.filter(
                 <AnimatePresence>
                   {messages.map((message, index) => (
                     <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`flex ${
-                      message.sender === "me"
-                      ? "justify-end"
-                      : "justify-start"
-                    }`}
+                      // key={message.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={`flex ${
+                        message.sender === "me"
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
                     >
                       <div
                         className={`flex max-w-[70%] items-end gap-2 ${
                           message.sender === "me"
-                          ? "flex-row-reverse"
-                          : "flex-row"
+                            ? "flex-row-reverse"
+                            : "flex-row"
                         }`}
-                        >
+                      >
                         {message.sender === "other" && (
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-purple-400 to-indigo-400 text-xs font-semibold">
                             {selectedChatData?.name?.charAt(0)}
@@ -552,18 +579,18 @@ const filteredChats = chattUser.filter(
                         <div
                           className={`rounded-2xl px-4 py-2.5 ${
                             message.sender === "me"
-                            ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
-                            : "bg-white/10 text-white backdrop-blur"
+                              ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+                              : "bg-white/10 text-white backdrop-blur"
                           }`}
-                          >
+                        >
                           <p className="text-sm">{message.text}</p>
                           <p
                             className={`mt-1 text-xs ${
                               message.sender === "me"
-                              ? "text-white/70"
-                              : "text-slate-400"
+                                ? "text-white/70"
+                                : "text-slate-400"
                             }`}
-                            >
+                          >
                             {message.timestamp}
                           </p>
                         </div>

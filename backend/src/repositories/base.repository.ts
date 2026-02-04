@@ -1,4 +1,4 @@
-import { Document, Model } from "mongoose";
+import { Document, Model, Types } from "mongoose";
 import { IRepository } from "./interface/base.Irepository";
 import Container, { Service } from "typedi";
 import { IUser } from "../models/user.model";
@@ -69,6 +69,10 @@ export abstract class BaseRepository<T extends Document> implements IRepository<
       throw new Error("Unknown error occurred in update");
     }
   }
+
+async updateById(id: Types.ObjectId,update: Record<string, any>): Promise<T | null> {
+  return this.model.findByIdAndUpdate(id, update, { new: true }).exec();
+}
 
   async deleteData(id: string): Promise<boolean> {
     try {

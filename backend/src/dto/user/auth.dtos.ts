@@ -18,6 +18,6 @@ export interface getAllDto {
 }
 export interface GetChatDto {
   userMail: string;
-  currentUserId: string
+  currentUserId: string | undefined;
 }
 

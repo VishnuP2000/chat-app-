@@ -57,6 +57,7 @@ privateAxios.interceptors.response.use(
         return Promise.reject(err);
       }
     }
+    console.log('this is userInstance response')
 
     return Promise.reject(error);
   }

@@ -1,32 +1,37 @@
 import { privateAxios } from "../axiosInstance/userInstance";
-import { IChat, IChatRoom, IMessage, IUser } from "../../types/chat";
+import { IChat, IMessage } from "../../types/chat";
 
-interface ChatResponse<T> {
+export interface ApiResponse<T> {
   success: boolean;
+  data: T;
   message?: string;
-  data?: T;
-  chatRoom?: IChatRoom;
-  chatRooms?: IChatRoom[];
-  messages?: IMessage[];
-  unreadCount?: number;
-  messagesMarkedAsSeen?: boolean;
-  users?: IUser[];
 }
 
-const handleError = (error: any): never => {
-  console.error(error);
-  throw error;
+export const sendMessage = async ( payload: { chatId: string; content: string }): Promise<IChat> => {
+try {
+  console.log('sendMessage')
+  const response = await privateAxios.post<ApiResponse<IChat>>(
+    "/message/send",
+    {payload}
+  );
+  console.log('response',response.data.data.messages)
+  console.log('response',response.data.data)
+  return response.data.data;
+} catch (error) {
+      console.error(error);
+    throw error;
+}
 };
-
-
-export const getMessage = async (chatId: string): Promise<IChatRoom> => {
+export const clickUser = async (chatId: string): Promise<IChat> => {
   try {
-    console.log("getMessage",chatId);
-    const response = await privateAxios.post<ChatResponse<IChatRoom>>( "/message/getMessages", { chatId });
-    return response.data.data!;
+    console.log("clickUser");
+    const response = await privateAxios.get<IChat>(
+      `/message/findUser/${chatId}`,
+    );
+    console.log("response.data", response.data.messages);
+    return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error(error);
+    throw error;
   }
 };
-
-

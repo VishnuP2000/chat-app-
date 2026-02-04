@@ -1,15 +1,6 @@
 import Container, { Service } from "typedi";
-import {
-  getAllDto,
-  GetChatDto,
-  SignInDto,
-  SignUpDto,
-} from "../../../dto/user/auth.dtos";
-import {
-  AuthResponse,
-  giveChatResult,
-  SignInResult,
-} from "../../../Interfaces/Interfaces";
+import { getAllDto, GetChatDto,SignInDto,SignUpDto,} from "../../../dto/user/auth.dtos";
+import {AuthResponse,giveChatResult,SignInResult,} from "../../../Interfaces/Interfaces";
 import { IAuthService } from "../../interface/auth/auth.Iservice";
 import { IUser } from "../../../models/user.model";
 import { IUserRepository } from "../../../repositories/interface/user/user.IRepository";
@@ -48,13 +39,13 @@ export class ChatService implements IChatService {
     if (!selectedUser) {
       throw new AppError("User not found", HttpStatus.BAD_REQUEST);
     }
-
+console.log('selectedUser',selectedUser)
     // Check if chat exists already
    const existingChat = await this.chatRepo.findOneByUsers([
   new Types.ObjectId(dto.currentUserId),
   selectedUser._id as Types.ObjectId
 ]);
-
+console.log('existingChat',existingChat)
     if (existingChat) {
       return { success: true, message: "Existing chat found", data: existingChat };
     }
@@ -62,11 +53,9 @@ export class ChatService implements IChatService {
     // Create new chat
     const newChat = await this.chatRepo.createChat({
       users: [new Types.ObjectId(dto.currentUserId), selectedUser._id as Types.ObjectId],
-      unreadCounts: new Map([
-        [dto.currentUserId, 0],
-        [selectedUser._id.toString(), 0],
-      ])
+      unreadCounts: new Map([[dto.currentUserId, 0], [selectedUser._id.toString(), 0],])
     } as Partial<IChat>);
+    console.log('newChat',newChat)
     
 
     return { success: true, message: "Chat created", data: newChat };

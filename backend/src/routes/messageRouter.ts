@@ -6,6 +6,7 @@ import chatRouter from "./chatRouter";
 const messageRouter=Router()
 
 console.log('messageRouter')
-messageRouter.get("/getMessages", verifyAccessToken, messagecontrollers.getMessages.bind(messagecontrollers));
+messageRouter.post("/send", verifyAccessToken, messagecontrollers.sendMessage.bind(messagecontrollers));
+messageRouter.get("/findUser/:chatId", verifyAccessToken, messagecontrollers.findUser.bind(messagecontrollers));
 
 export default messageRouter

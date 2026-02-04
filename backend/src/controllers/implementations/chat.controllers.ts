@@ -33,11 +33,14 @@ export class ChatControllers {
     }
   }
 
-  async chatUsers(req: Request, res: Response) {
+  async chatUsers(req: AuthRequset, res: Response) {
     try {
       console.log('chatUsers')
       const { userMail } = req.body;
-      console.log('req.body',userMail)
+      console.log("userMail", userMail);
+      const currentUserId= req.user?.id  //
+      console.log("currentUserId", currentUserId);
+
       if (!userMail) {
         return res
           .status(400)
@@ -45,22 +48,20 @@ export class ChatControllers {
       }
 
       // Extract current user ID from JWT token
-      const token = req.headers.authorization?.replace("Bearer ", "");
-      if (!token) {
-        return res
-          .status(401)
-          .json({ message: "Unauthorized", success: false });
-      }
+      // const token = req.headers.authorization?.replace("Bearer ", "");
+      // if (!token) {
+      //   return res
+      //     .status(401)
+      //     .json({ message: "Unauthorized", success: false });
+      // }
 
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!) as {
-        user: { id: string };
-      };
+      // const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!) as {
+      //   user: { id: string };
+      // };
 
-      console.log("decoded.user", decoded.user);
-      const currentUserId = decoded.user.id;
+      // console.log("decoded.user", decoded.user);
+      // const currentUserId = decoded.user.id;
 
-      console.log("currentUserId", currentUserId);
-      console.log("userMail", userMail);
 
       const chat = await this.chatservice.createOrGetChat({
         userMail,

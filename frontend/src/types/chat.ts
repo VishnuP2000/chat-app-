@@ -1,7 +1,5 @@
 export interface IChatRoom {
   _id: string;
-//   userId: IChatUser;
-//   providerId: IChatUser;
   lastMessage?: string;
   userUnreadCount: number;
   providerUnreadCount: number;
@@ -16,7 +14,7 @@ export interface IUser {
   email: string;
 }
 
-export interface IChat {
+export interface  IChat {
   _id: string;
   users: IUser[];
   messages: IMessage[];
@@ -37,4 +35,9 @@ export interface IMessage {
   isSeen: boolean;
   createdAt: string;
   updatedAt: string;
+  id: string;
+  // text: string;
+  // sender: "me" | "other";
+  // timestamp: string;
+  // avatar?: string;
 }
