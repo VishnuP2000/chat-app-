@@ -100,8 +100,8 @@ export class ChatControllers {
 
       return res.status(200).json({
         success: true,
-        message:'',
-        data: chatData,
+        message:'Messages fetched successfully',
+        data: chatData.data,
       });
     } catch (error) { 
       console.log(error);
@@ -113,6 +113,7 @@ export class ChatControllers {
 
   async getAllChats(req: AuthRequset, res: Response) {
     try {
+      console.log('getAllChats')
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({
@@ -121,10 +122,11 @@ export class ChatControllers {
         });
       }
 
-      const chats = await this.chatservice.getAllChatsByUserId(userId);
+      const chatsResult = await this.chatservice.getAllChatsByUserId(userId);
+      console.log('chatsResult',chatsResult)
       return res.status(200).json({
         success: true,
-        data: chats,
+        data: chatsResult,
       });
     } catch (error) {
       console.error("Error fetching all chats:", error);

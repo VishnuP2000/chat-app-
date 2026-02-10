@@ -38,10 +38,10 @@ export const usersFetch = async (): Promise<IUser[]> => {
   }
 };
 
-export const usersChatAdd = async (userMail: string): Promise<IChatRoom> => {
+export const usersChatAdd = async (userMail: string): Promise<IChat> => { // IchatRoom changed
   try {
     console.log("usersChatAdd");
-    const response = await privateAxios.post<ChatResponse<IChatRoom>>(
+    const response = await privateAxios.post<ChatResponse<IChat>>(
       "/chat/create",
       { userMail }
     );
@@ -69,18 +69,18 @@ export const usersChatFetch = async (chatId: string): Promise<IChat> => {
   }
 };
 
-// export const getAllChats = async (): Promise<any[]> => {
-//   try {
-//     console.log("getAllChat Chat API");
-//     const response = await privateAxios.get<ChatResponse<any[]>>(
-//       "/chat/all"
-//     );
-//     const chats = response.data.data;
-//     if (!chats) {
-//       throw new Error("No chats received");
-//     }
-//     return chats;
-//   } catch (error) {
-//     return handleError(error);
-//   }
-// };
+export const getAllChats = async (): Promise<any[]> => {
+  try {
+    console.log("getAllChat Chat API");
+    const response = await privateAxios.get<ChatResponse<any[]>>(
+      "/chat/all"
+    );
+    const chats = response.data.data;
+    if (!chats) {
+      throw new Error("No chats received");
+    }
+    return chats;
+  } catch (error) {
+    return handleError(error);
+  }
+};

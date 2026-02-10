@@ -14,14 +14,26 @@ export interface IUser {
   email: string;
 }
 
-export interface  IChat {
+// export interface IChat {
+//   _id: string;
+//   users: IUser[];
+//   messages: IMessage[];
+//   unreadCounts: Record<string, number>;
+//   createdAt: string;
+//   updatedAt: string;
+//   lastMessage: string;
+//   content: string;
+// }
+export interface IChat {
   _id: string;
   users: IUser[];
   messages: IMessage[];
   unreadCounts: Record<string, number>;
   createdAt: string;
   updatedAt: string;
+  lastMessage: string | IMessage | null;
 }
+
 
 export interface IMessage {
   _id?: string;

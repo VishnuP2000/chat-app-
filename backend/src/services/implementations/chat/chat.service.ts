@@ -76,8 +76,13 @@ console.log('existingChat',existingChat)
   }
 
   async getAllChatsByUserId(userId: string): Promise<IChat[]> {
+    console.log("getAllChatsByUserId",userId)
     const userObjectId = new Types.ObjectId(userId);
+        if (!userObjectId) {
+      throw new AppError("chat's is not found", HttpStatus.BAD_REQUEST);
+    }
     return await this.chatRepo.findAllByUserId(userObjectId);
+
   }
 }
 

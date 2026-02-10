@@ -44,12 +44,12 @@ export class messageControllers {
       console.log("findUsers");
       const { chatId } = req.params;
       console.log("userChatId", chatId);
-      const response = await this.messageservice.findUserId(chatId);
-      console.log("messageControllerUserChatId", response.data);
+      const result = await this.messageservice.findUserId(chatId);
+      console.log("messageControllerUserChatId", result.data);
 
       return res.status(200).json({
         success: true,
-        response,
+        data: result.data,
       });
     } catch (error) {
       console.error("Error fetching users:", error);

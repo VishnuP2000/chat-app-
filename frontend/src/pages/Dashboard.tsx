@@ -2,7 +2,7 @@
 
 import React, { JSX, useState, useRef, useEffect } from "react";
 import { GrAdd } from "react-icons/gr";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, number } from "framer-motion";
 import { privateAxios } from "@/service/axiosInstance/userInstance";
 import {
   IconSearch,
@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
+  getAllChats,
   usersChatAdd,
   usersChatFetch,
   usersFetch,
@@ -28,10 +29,19 @@ import {
 import { IChat, IChatRoom, IMessage, IUser } from "@/types/chat";
 import { clickUser, sendMessage } from "@/service/Api/messageApi";
 
-interface Chat extends IChatRoom {
-  name?: string;
-  timestamp?: string;
-  unread?: number;
+// interface Chat extends IChatRoom {
+//   name?: string;
+//   timestamp?: string;
+//   unread?: number;
+//   avatar?: string;
+//   isOnline?: boolean;
+// }
+interface Chat  {
+  _id: string;
+  name: string;
+  lastMessage: string;
+  timestamp: string;
+  unread: number;
   avatar?: string;
   isOnline?: boolean;
 }
@@ -72,6 +82,7 @@ const Dashboard = (): JSX.Element => {
   /* add the database chat users in the chattUser after click the fetching function */
   const [chattUser, setChattUser] = useState<Chat[]>([]);
   console.log("chatttts", chattUser);
+
   // useEffect(()=>{
   //   console.log('demochat',chattUser)
   // },[chattUser])
@@ -95,6 +106,7 @@ const Dashboard = (): JSX.Element => {
       setLoadingUsers(false);
     }
   };
+ 
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({});
@@ -109,75 +121,52 @@ const Dashboard = (): JSX.Element => {
   };
 
   const selectedChatData = chattUser.find((chat) => chat._id === selectedChat);
-  // console.log('selectedChatData',selectedChatData)
 
-  /*-----------------Load all chats on mount-------------------*/
 
-  // useEffect(() => {
-  //   const loadAllChats = async () => {
-  //     try {
-  //       const allChats = await getAllChats();
-  //       console.log("All chats loaded:", allChats);
-
-  //       // Transform backend chat data to Chat interface with user names
-  //       // The backend should return chats with populated users
-  //       const transformedChats: Chat[] = allChats.map((chatRoom: any) => {
-  //         // Get the other user's name (not the current logged-in user)
-  //         // Backend should populate users array
-  //         let otherUserName = "Unknown User";
-  //         if (chatRoom.users && Array.isArray(chatRoom.users) && chatRoom.users.length > 0) {
-  //           // If users is populated with name/email, get the first user
-  //           const otherUser = chatRoom.users.find((u: any) => typeof u === 'object' && u.name) || chatRoom.users[0];
-  //           otherUserName = otherUser?.name || otherUser?.email || "Unknown User";
-  //         }
-
-  //         return {
-  //           ...chatRoom,
-  //           name: otherUserName,
-  //           timestamp: chatRoom.lastMessageTime || chatRoom.updatedAt || "",
-  //           lastMessage: chatRoom.lastMessage?.content || "",
-  //           unread: chatRoom.userUnreadCount || 0,
-  //         };
-  //       });
-
-  //       setChattUser(transformedChats);
-  //     } catch (error) {
-  //       console.error("Failed to load chats:", error);
-  //     }
-  //   };
-
-  //   loadAllChats();
-  // }, []);
 
   /*-----------------add chat users in the database --------------------*/
 
-  const addChatUsers = async (userMail: string) => {
-    try {
-      console.log("userMail", userMail);
-      const chat = await usersChatAdd(userMail);
-      console.log("chat data", chat);
-      if (!chat) return;
+const addChatUsers = async (userMail: string) => {
+  try {
+    const chat: IChat = await usersChatAdd(userMail);
+    if (!chat) return;
 
-      // Find the user from the users list to get their name
-      const user = users.find((u) => u.email === userMail);
-      console.log("user", user);
-      setChattUser((prev) => {
-        if (prev.some((c) => c._id === chat._id)) return prev;
-        return [...prev, { ...chat, name: user?.name || "Unknown User" }];
-      });
-      setSelectedChat(chat._id);
-      setShowNewChat(false);
-      return chat;
-    } catch (err) {
-      toast.error("Failed to start chat");
-    }
-  };
+    const user = users.find((u) => u.email === userMail);
+
+    setChattUser((prev) => {
+      if (prev.some((c) => c._id === chat._id)) return prev;
+
+      return [
+        ...prev,
+        {
+          _id: chat._id,
+          name: user?.name ?? "Unknown User",
+          lastMessage:
+            typeof chat.lastMessage === "string"
+              ? chat.lastMessage
+              : chat.lastMessage?.content ?? "",
+          timestamp: new Date(chat.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          unread: 0,
+        },
+      ];
+    });
+
+    setSelectedChat(chat._id);
+    setShowNewChat(false);
+    return chat;
+  } catch {
+    toast.error("Failed to start chat");
+  }
+};
+
 
   /*-----------------Fetching chat Users------------------*/
 
   const fetchChatUsers = async (chatId: string) => {
     try {
-      // const token = localStorage.getItem("access-token");
       console.log("chatId", chatId);
 
       const res = await usersChatFetch(chatId);
@@ -209,6 +198,72 @@ const Dashboard = (): JSX.Element => {
     }
   };
 
+
+//   const normalizeChats = (chats: IChat[], currentUserId: string): Chat[] => {
+//     console.log('normalizeChats',currentUserId)
+//   return chats.map(chat => {
+//     const otherUser = chat.users.find(u => u._id !== currentUserId);
+
+//     return {
+//       ...chat,
+//       name: otherUser?.name ?? "Unknown User",
+//       lastMessage: chat.lastMessage?.content ?? "",
+//       timestamp: chat.lastMessage
+//         ? new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
+//             hour: "2-digit",
+//             minute: "2-digit",
+//           })
+//         : "",
+//     };
+//   });
+// };
+const normalizeChats = (
+  chats: IChat[],
+  currentUserId: string
+): Chat[] => {
+  return chats.map(chat => {
+    const otherUser = chat.users.find(u => u._id !== currentUserId);
+
+    return {
+      _id: chat._id,
+      name: otherUser?.name ?? "Unknown User",
+      lastMessage:
+        typeof chat.lastMessage === "string"
+          ? chat.lastMessage
+          : chat.lastMessage?.content ?? "",
+      timestamp: new Date(chat.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      unread: chat.unreadCounts?.[currentUserId] ?? 0,
+    };
+  });
+};
+
+
+
+
+
+// fetch users in the useEffect
+useEffect(() => {
+  const loadChats = async () => {
+    try {
+      const chats = await getAllChats();
+      const userId = localStorage.getItem("userId"); // or from auth state
+      console.log('userId',userId)
+      setChattUser(normalizeChats(chats, userId!));
+    } catch (err) {
+      console.error("Failed to load chats", err);
+    }
+  };
+
+  loadChats();
+}, []);
+
+
+
+
+
   // when i click the user's pass the _id in the backend and fetch the specific user message
 
   const fetchMessage = async (chatId: string) => {
@@ -224,11 +279,11 @@ const Dashboard = (): JSX.Element => {
     }
   };
 
-  const formatTime = (date: string) =>
-    new Date(date).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  // const formatTime = (date: string) =>
+  //   new Date(date).toLocaleTimeString([], {
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //   });
 
   const mapIMessageToUIMessage = (msg: IMessage): UIMessage => {
     return {

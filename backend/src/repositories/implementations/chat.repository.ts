@@ -83,10 +83,16 @@ async findAllByUserId(userId: Types.ObjectId): Promise<IChat[]> {
       select: "name email"
     })
     .populate({
-      path: "lastMessage",
-      select: "content createdAt"
+      path: "messages",
+      populate: {
+        path: "senderId",
+        select: "name email"
+      }
     })
-    .sort({ updatedAt: -1 })
+    .populate({
+      path: "lastMessage",
+      select: "content senderId createdAt"
+    })
     .exec();
   } catch (error: unknown) {
     if (error instanceof Error) {

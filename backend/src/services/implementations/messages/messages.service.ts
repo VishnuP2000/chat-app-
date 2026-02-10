@@ -26,14 +26,14 @@ export class messageService implements IMessageService {
     const messageObjectId = new Types.ObjectId(chatId);
     const senderIdObjectId = new Types.ObjectId(senderId);
     console.log("messageObjectId", messageObjectId);
-    const response = await this.chatRepo.findByChatId(messageObjectId);
-    console.log("chatRepo response", response);
+    const existingChat = await this.chatRepo.findByChatId(messageObjectId);
+    console.log("chatRepo existingChat", existingChat);
 
-    if (!response) {
+    if (!existingChat) {
       throw new AppError("Chat not found", HttpStatus.BAD_REQUEST);
     }
 
-    const receiverId = response.users.find(
+    const receiverId = existingChat.users.find(
       (u) => u._id.toString() !== senderId,
     )?._id;
 
@@ -41,24 +41,33 @@ export class messageService implements IMessageService {
       throw new AppError("Receiver not foundd", HttpStatus.BAD_REQUEST);
     }
 
-    console.log('create message')
+    console.log("create message");
     // 1️⃣ Create message
     const message = await MessageModel.create({
       chatId: messageObjectId,
       senderId: senderIdObjectId,
       content,
     });
-console.log('message',message)
+    console.log("message", message);
     // 2️⃣ Update chat
-await this.chatRepo.updateById(messageObjectId, {
-  $push: { messages: message._id },
-  $set: { lastMessage: message._id },
-  $inc: {
-    [`unreadCounts.${receiverId.toString()}`]: 1,
-  },
-});
-    console.log('return suceessss')
-    return { success: true, message: "message send", data: response };
+    await this.chatRepo.updateById(messageObjectId, {
+      $push: { messages: message._id },
+      $set: { lastMessage: message._id },
+      $inc: {
+        [`unreadCounts.${receiverId.toString()}`]: 1,
+      },
+    });
+
+    // 3️⃣ Re-fetch chat so it includes the NEW last message & populated relations
+    const updatedChat = await this.chatRepo.findByChatId(messageObjectId);
+    console.log("updatedChat after new message", updatedChat);
+
+    if (!updatedChat) {
+      throw new AppError("Chat not found after update", HttpStatus.BAD_REQUEST);
+    }
+
+    console.log("return success");
+    return { success: true, message: "message send", data: updatedChat };
   }
 
   async findUserId(userChatId: string): Promise<giveChatResult> {
