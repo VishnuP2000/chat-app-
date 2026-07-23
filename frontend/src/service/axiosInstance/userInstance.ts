@@ -6,9 +6,10 @@ const API_URL = import.meta.env.VITE_USER_BASE_URL;
 
 // ---------------- Public instance (no access token needed) ----------------
 export const publicAxios = axios.create({
-  baseURL: API_URL,
+  baseURL: "http://localhost:4000",
   withCredentials: true, // send cookies (refresh token)
 });
+console.log('API_URL',API_URL)
 
 // ---------------- User instance (needs access token) ----------------
 export const privateAxios = axios.create({
@@ -26,6 +27,18 @@ privateAxios.interceptors.request.use((config) => {
   return config;
 });
 
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+const onRefreshed = (token: string) => {
+  refreshSubscribers.map((callback) => callback(token));
+  refreshSubscribers = [];
+};
+
+const addRefreshSubscriber = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback);
+};
+
 // ---------------- Response Interceptor ----------------
 privateAxios.interceptors.response.use(
   (response) => response,
@@ -40,7 +53,17 @@ privateAxios.interceptors.response.use(
 
     // Access token expired → get new one using refresh token cookie
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(privateAxios(originalRequest));
+          });
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
         const newAccessToken = await refreshAccessToken();
@@ -48,11 +71,16 @@ privateAxios.interceptors.response.use(
         // Save new access token
         localStorage.setItem("access-token", newAccessToken);
 
+        isRefreshing = false;
+        onRefreshed(newAccessToken);
+
         // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return privateAxios(originalRequest);
 
       } catch (err) {
+        isRefreshing = false;
+        refreshSubscribers = [];
         localStorage.removeItem("access-token");
         return Promise.reject(err);
       }

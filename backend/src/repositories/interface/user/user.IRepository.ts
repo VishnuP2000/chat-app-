@@ -5,4 +5,5 @@ import { IRepository } from "../base.Irepository";
 export interface IUserRepository extends IRepository<IUser> {
   findUserByEmail(email: string): Promise<IUser | null | never>;
    findAllUsers(): Promise<IUser[]>;
-}
+  //  findOtherUsers(email:string): Promise<IUser[]>
+} 

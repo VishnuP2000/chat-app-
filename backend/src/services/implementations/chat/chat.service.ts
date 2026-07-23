@@ -1,6 +1,15 @@
 import Container, { Service } from "typedi";
-import { getAllDto, GetChatDto,SignInDto,SignUpDto,} from "../../../dto/user/auth.dtos";
-import {AuthResponse,giveChatResult,SignInResult,} from "../../../Interfaces/Interfaces";
+import {
+  getAllDto,
+  GetChatDto,
+  SignInDto,
+  SignUpDto,
+} from "../../../dto/user/auth.dtos";
+import {
+  AuthResponse,
+  giveChatResult,
+  SignInResult,
+} from "../../../Interfaces/Interfaces";
 import { IAuthService } from "../../interface/auth/auth.Iservice";
 import { IUser } from "../../../models/user.model";
 import { IUserRepository } from "../../../repositories/interface/user/user.IRepository";
@@ -33,56 +42,67 @@ export class ChatService implements IChatService {
   }
 
   async createOrGetChat(dto: GetChatDto): Promise<giveChatResult> {
-
-     console.log("userMail",dto.userMail)
+    console.log("userMail", dto.userMail);
     const selectedUser = await this.userRepo.findUserByEmail(dto.userMail);
     if (!selectedUser) {
       throw new AppError("User not found", HttpStatus.BAD_REQUEST);
     }
-console.log('selectedUser',selectedUser)
+    console.log("selectedUser", selectedUser);
     // Check if chat exists already
-   const existingChat = await this.chatRepo.findOneByUsers([
-  new Types.ObjectId(dto.currentUserId),
-  selectedUser._id as Types.ObjectId
-]);
-console.log('existingChat',existingChat)
+    const existingChat = await this.chatRepo.findOneByUsers([
+      new Types.ObjectId(dto.currentUserId),
+      selectedUser._id as Types.ObjectId,
+    ]);
+    console.log("existingChat", existingChat);
     if (existingChat) {
-      return { success: true, message: "Existing chat found", data: existingChat };
+      return {
+        success: true,
+        message: "Existing chat found",
+        data: existingChat,
+      };
     }
 
     // Create new chat
     const newChat = await this.chatRepo.createChat({
-      users: [new Types.ObjectId(dto.currentUserId), selectedUser._id as Types.ObjectId],
-      unreadCounts: new Map([[dto.currentUserId, 0], [selectedUser._id.toString(), 0],])
+      users: [
+        new Types.ObjectId(dto.currentUserId),
+        selectedUser._id as Types.ObjectId,
+      ],
+      unreadCounts: new Map([
+        [dto.currentUserId, 0],
+        [selectedUser._id.toString(), 0],
+      ]),
     } as Partial<IChat>);
-    console.log('newChat',newChat)
-    
+    console.log("newChat", newChat);
 
     return { success: true, message: "Chat created", data: newChat };
   }
 
-  async dataFetch(userId:string):Promise<giveChatResult>{
-    console.log('chatId',userId)
+  async dataFetch(userId: string): Promise<giveChatResult> {
+    console.log("chatId", userId);
     const chatObjectId = new Types.ObjectId(userId);
-    console.log('chatObjectId',chatObjectId)
-    const chat = await this.chatRepo.findByChatId(chatObjectId)
-    console.log('chatservied',chat)
+    console.log("chatObjectId", chatObjectId);
+    const chat = await this.chatRepo.findByChatId(chatObjectId);
+    console.log("chatservied", chat);
 
-          if (!chat) {
-    throw new AppError("Chat not found", HttpStatus.BAD_REQUEST);
-  }
+    if (!chat) {
+      throw new AppError("Chat not found", HttpStatus.BAD_REQUEST);
+    }
 
-        return { success: true, message: "Messages fetched successfully", data: chat}
+    return {
+      success: true,
+      message: "Messages fetched successfully",
+      data: chat,
+    };
   }
 
   async getAllChatsByUserId(userId: string): Promise<IChat[]> {
-    console.log("getAllChatsByUserId",userId)
+    console.log("getAllChatsByUserId", userId);
     const userObjectId = new Types.ObjectId(userId);
-        if (!userObjectId) {
+    if (!userObjectId) {
       throw new AppError("chat's is not found", HttpStatus.BAD_REQUEST);
     }
     return await this.chatRepo.findAllByUserId(userObjectId);
-
   }
 }
 

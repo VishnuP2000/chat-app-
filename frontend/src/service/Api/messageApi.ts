@@ -7,12 +7,9 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export const sendMessage = async (payload: {
-  chatId: string;
-  content: string;
-}): Promise<IChat> => {
+export const sendMessage = async (payload: {chatId: string;content: string;}): Promise<IChat> => {
 try {
-  console.log('sendMessage')
+  console.log('payload',payload)
   const response = await privateAxios.post<ApiResponse<IChat>>(
     "/message/send",
     {payload}

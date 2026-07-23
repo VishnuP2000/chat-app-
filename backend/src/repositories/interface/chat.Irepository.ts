@@ -7,5 +7,5 @@ export interface IChatRepository<T> extends IRepository<T> {
   findOneByUsers(userIds: Types.ObjectId[]): Promise<T | null>;
   findByChatId(id: Types.ObjectId): Promise<T | null>;
   findAllByUserId(userId: Types.ObjectId): Promise<T[]>;
-  // findupdateById( id: Types.ObjectId,update: Record<string, any>,): Promise<IChat | null>
+  updateAndPopulate(id: Types.ObjectId, update: Record<string, any>): Promise<T | null>;
 }

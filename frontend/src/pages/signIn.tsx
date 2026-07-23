@@ -13,7 +13,13 @@ import "react-toastify/dist/ReactToastify.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { signInRequest } from "@/service/Api/auth.userApi";
 
-const LabelInputContainer = ({children,className,}: {children: React.ReactNode;className?: string;}): JSX.Element => (
+const LabelInputContainer = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}): JSX.Element => (
   <div className={cn("mb-3 flex w-full flex-col space-y-2", className)}>
     {children}
   </div>
@@ -46,7 +52,9 @@ function LoginPage(): JSX.Element {
     return newErrors;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
     const validationErrors = validate();
     setErrors(validationErrors);
@@ -55,8 +63,11 @@ function LoginPage(): JSX.Element {
     try {
       const payload = { email: form.email, password: form.password };
       const response = await signInRequest(payload);
-      console.log('accs++++++',response.data.accessToken)
-      localStorage.setItem("access-token", response.data.accessToken);
+      const { accessToken, user } = response.data;
+      localStorage.setItem("access-token", accessToken);
+      console.log("accessToken", accessToken);
+      localStorage.setItem("userId", user.id);
+      console.log("userId", user.id);
       if (response.data.success) navigate("/dashboard");
       else toast.error(response.data.message || "Invalid credentials");
     } catch (error: any) {

@@ -15,6 +15,11 @@ export interface SignInResult extends AuthResponse {
   role?: string;
   userId?: string;
   pic?: string;
+  user:{
+    id:string,
+    name:string,
+    email:string
+  }
 }
 export interface giveChatResult{
   message:string,

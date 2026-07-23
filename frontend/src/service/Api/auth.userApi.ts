@@ -13,19 +13,25 @@ const handleError = (error: any) => {
 
 export const signUpRequest = async (formData:object)=>{
     try {
+      console.log("signUpRequest",formData)
         const response = await publicAxios.post("/user/signUp", formData)
+        console.log('resp',response)
         return handleResponse(response,"Error in sign-up request")
     } catch (error) {
+      console.log('signUp error',error)
         handleError(error)
     }
 }
 
 export const signInRequest = async (formData: object) => {
   try {
+    console.log('formdata',formData)
     const response = await publicAxios.post("/user/signIn", formData);
-    console.log('signInRequest------')
+    console.log('signInRequest------',response)
     return handleResponse(response, "Error in sign-in request");
+    // return response.data;
   } catch (error) {
+    console.log('errror',error)
     handleError(error);
   }
 };

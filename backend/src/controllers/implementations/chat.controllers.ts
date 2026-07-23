@@ -124,13 +124,13 @@ export class ChatControllers {
 
       const chatsResult = await this.chatservice.getAllChatsByUserId(userId);
       console.log('chatsResult',chatsResult)
-      return res.status(200).json({
+      return res.status(HttpStatus.OK).json({
         success: true,
         data: chatsResult,
       });
     } catch (error) {
       console.error("Error fetching all chats:", error);
-      return res.status(500).json({
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: "Failed to fetch chats",
       });

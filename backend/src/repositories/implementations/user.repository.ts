@@ -23,6 +23,9 @@ export class UserRepository extends BaseRepository<IUser>implements IUserReposit
   return await userModel.find().select("-password");
 }
 
+async AllUsersfind(email: string): Promise<IUser[]> {
+  return await userModel.find({ _id: { $ne: email } }).select("-password");
+}
 
 } 
 

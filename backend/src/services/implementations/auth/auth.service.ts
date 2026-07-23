@@ -23,14 +23,14 @@ import { generateAccessToken, generateRefreshToken } from "../../../utils/jwt";
 import { id } from "zod/v4/locales";
 import { ChatModel, IChat } from "../../../models/chat.modal";
 import { chatRepository } from "../../../repositories/implementations/chat.repository";
-// import  IBaseRepository  from "../../../repositories/interface/base.Irepository"; 
+// import  IBaseRepository  from "../../../repositories/interface/base.Irepository";
 import { IChatRepository } from "../../../repositories/interface/chat.Irepository";
 import { Types } from "mongoose";
 // import BaseRepository  from "../../../repositories/base.repository";
 @Service()
 export class AuthService implements IAuthService {
   private userRepo: IUserRepository;
-private chatRepo: IChatRepository<IChat>;
+  private chatRepo: IChatRepository<IChat>;
   // private chatRepo: IRepository<IChat>;
   constructor() {
     this.userRepo = userRepository;
@@ -48,7 +48,7 @@ private chatRepo: IChatRepository<IChat>;
         console.log("existUser is already exist");
         throw new AppError(
           "User already registered with this email , Please login...",
-          HttpStatus.BAD_REQUEST
+          HttpStatus.BAD_REQUEST,
         );
       }
       console.log("exist", existUser);
@@ -68,18 +68,18 @@ private chatRepo: IChatRepository<IChat>;
       }
       throw new AppError(
         error.message || "Internal Server Error",
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
   async signIn(userData: SignInDto): Promise<SignInResult> {
     try {
       const { email, password } = userData;
-      console.log("fifth",email);
+      console.log("fifth", email);
       const exist = await this.userRepo.findUserByEmail(email);
       console.log(
         "existtttttttttttttttttttttttttttttttttttttttttttttttttt",
-        exist
+        exist,
       );
       if (!exist) {
         throw new AppError("invalid credential", HttpStatus.BAD_REQUEST);
@@ -89,14 +89,19 @@ private chatRepo: IChatRepository<IChat>;
       if (!comparePassword) {
         throw new AppError("invalide password", HttpStatus.BAD_REQUEST);
       }
-      const accessToken = generateAccessToken({id: exist._id});
-      const refreshToken = generateRefreshToken({id: exist._id});
+      const accessToken = generateAccessToken({ id: exist._id });
+      const refreshToken = generateRefreshToken({ id: exist._id });
       console.log("seventh");
       return {
         success: true,
         message: "signIn is succesfully complated",
         accessToken: accessToken,
         refreshToken: refreshToken,
+        user: {
+          id: exist._id.toString(),
+          name: exist.name,
+          email: exist.email,
+        },
       };
     } catch (error) {
       if (error instanceof AppError) {
@@ -104,33 +109,14 @@ private chatRepo: IChatRepository<IChat>;
       }
       throw new AppError(
         "An error occurred while signing in. Please try again later.",
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-  // async getAllUsers(): Promise<IUser[]> {
-  //   console.log("service");
-  //   return this.userRepo.findAllUsers();
-  // }
 
-  // async createOrGetChat(dto: GetChatDto): Promise<giveChatResult> {
-  //   console.log("createOrGetChat", dto);
-  //   const { userMail } = dto;
-  //   console.log("email", userMail);
-  //   const exist = await this.userRepo.findUserByEmail(userMail);
-  //   console.log("exist", userMail);
-  //   if (!exist) {
-  //     throw new AppError("invalid credential", HttpStatus.BAD_REQUEST);
-  //   }
-  //   const Schat=await this.chatRepo.createChat({
-  //     name:exist.name,
-  //     email:exist.email,
-  //     password:exist.password,
-  //   }as IChat);
-
-  //   return { success: true, message: "Chat created", data: Schat };
-  // }
-
+//   async AllUsersfind(currentUserId: string): Promise<IUser[]> {
+//   return this.userRepo.findAllUsers(currentUserId);
+// }
 }
 
 export const authService = Container.get(AuthService);

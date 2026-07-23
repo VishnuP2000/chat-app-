@@ -7,12 +7,9 @@ import {
   signInSchema,
 } from "../../validations/user.Zvalidations";
 import { HttpStatus } from "../../enum/httpStatus";
-import { success } from "zod";
 import { setCookies } from "../../utils/cookies.utils";
 import { AppError } from "../../utils/customError";
 import jwt from "jsonwebtoken";
-import { chatService } from "../../services/implementations/chat/chat.service";
-import { IChatService } from "../../services/interface/chat/chat.IService";
 
 @Service()
 export class AuthControllers {
@@ -67,7 +64,7 @@ export class AuthControllers {
 
       const response = await this.authservice.signIn({ email, password });
 
-      console.log("eigth");
+      console.log("eigth",response);
       setCookies(res, "refreshToken", String(response.refreshToken));
 
       console.log("suceeeeeeeeee");
@@ -75,20 +72,18 @@ export class AuthControllers {
       return res.status(HttpStatus.OK).json({
         success: true,
         message: "Sign in successfully completed",
-        accessToken: response.accessToken,  
+        accessToken: response.accessToken,
+        user:response.user
       });
     } catch (error) {
       if (error instanceof AppError) {
-        return res
-          .status(error.statusCode)
-          .json({ message: error.message, success: false });
+        return res.status(error.statusCode).json({ message: error.message, success: false });
       }
       console.log("signin error", error);
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: "Internal server error" });
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal server error" });
     }
   }
+
   async refreshToken(req: Request, res: Response) {
     try {
       const token = req.cookies.refreshToken;
@@ -102,7 +97,7 @@ export class AuthControllers {
       const newAccessToken = jwt.sign(
         { id: decoded.id },
         process.env.ACCESS_TOKEN!,
-        { expiresIn: "15m" }
+        { expiresIn: "15m" },
       );
 
       return res.status(200).json({ accessToken: newAccessToken });
@@ -110,42 +105,7 @@ export class AuthControllers {
       return res.status(401).json({ message: "Invalid refresh token" });
     }
   }
-  // async getUsers(req: Request, res: Response) {
-  //   try {
-  //     console.log('hello')
-  //     const users = await this.chatservice.getAllUsers();
-  //     console.log('get uusers')
-  //     return res.status(200).json({
-  //       success: true,
-  //       users
-  //     });
-  //   } catch {
-  //     return res.status(500).json({
-  //       success: false,
-  //       message: "Failed to fetch users"
-  //     });
-  //   }
-  // }
-  // // backend/src/controllers/implementations/auth.controllers.ts
-  // async chatUsers(req: Request, res: Response) {
-  //   try {
-  //     const { userMail } = req.body;
-  //     if (!userMail) {
-  //       return res.status(400).json({ message: "userMail is required", success: false });
-  //     }
-
-  //     const Cchat = await this.chatservice.createOrGetChat({ userMail });
-  //     console.log('cchat',Cchat)
-
-  //     return res.status(200).json({
-  //       success: true,
-  //       data: Cchat,
-  //     });
-  //   } catch (error) {
-  //     console.log("err", error);
-  //     return res.status(500).json({ success: false, message: "Internal server error" });
-  //   }
-  // }
+ 
 }
 
 export const authControllers = Container.get(AuthControllers);

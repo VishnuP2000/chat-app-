@@ -1,36 +1,53 @@
+import express, { Request, Response } from "express";
+import http from "http";
+import { Server } from "socket.io";
 import "reflect-metadata";
-import cors from 'cors';
-import express,{Request,Response} from "express";
+import cors from "cors";
 import dotenv from "dotenv";
+
 import userRouter from "./routes/userRouter";
 import { connectDB } from "./config/db";
 import chatRouter from "./routes/chatRouter";
 import messageRouter from "./routes/messageRouter";
-import "./models/chat.modal"
-import "./models/message.modal"
-import "./models/user.model"
 
-console.log('enter to server.ts')
-const app = express();
+import "./models/chat.modal";
+import "./models/message.modal";
+import "./models/user.model";
+
 dotenv.config();
+
+const app = express();
+
+const httpServer = http.createServer(app);
+
 connectDB();
 
-app.use(cors({
-  origin:"http://localhost:5173",
-  credentials:true
-}))
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
-app.use(express.json());  // it is use to parse 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-console.log('first')
+
+
 app.use("/user", userRouter);
 app.use("/chat", chatRouter);
 app.use("/message", messageRouter);
 
-app.use((req:Request, res:Response) => { 
-  res.send("router is not exist ");       
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    message: "Route does not exist",
+  });
 });
-app.listen(process.env.PORT, () => {
-  console.log("server started");
+// SOCKET.IO
+import { initSocketServer } from "./socket/socketServer";
+initSocketServer(httpServer);
+
+
+httpServer.listen(process.env.PORT, () => {
+  console.log(`Server started on port ${process.env.PORT}`);
 });

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { JSX, useState, useRef, useEffect } from "react";
+import React, { type JSX, useState, useRef, useEffect } from "react";
 import { GrAdd } from "react-icons/gr";
-import { motion, AnimatePresence, number } from "framer-motion";
-import { privateAxios } from "@/service/axiosInstance/userInstance";
+import { motion, AnimatePresence } from "framer-motion";
+// import { privateAxios } from "@/service/axiosInstance/userInstance";
 import {
   IconSearch,
   IconSend,
@@ -16,6 +16,7 @@ import {
   IconVideo,
   IconPaperclip,
   IconMoodSmile,
+  IconPalette,
 } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -26,8 +27,11 @@ import {
   usersChatFetch,
   usersFetch,
 } from "@/service/Api/chatApi";
-import { IChat, IChatRoom, IMessage, IUser } from "@/types/chat";
-import { clickUser, sendMessage } from "@/service/Api/messageApi";
+import type { IChat, IMessage, IUser } from "@/types/chat";
+import { clickUser } from "@/service/Api/messageApi";
+// import { connectSocket } from "@/socket/socket";
+import { io, type Socket } from "socket.io-client";
+// import { Socket } from "dgram";
 
 // interface Chat extends IChatRoom {
 //   name?: string;
@@ -36,9 +40,11 @@ import { clickUser, sendMessage } from "@/service/Api/messageApi";
 //   avatar?: string;
 //   isOnline?: boolean;
 // }
-interface Chat  {
+
+interface Chat {
   _id: string;
   name: string;
+  receiverId: string;
   lastMessage: string;
   timestamp: string;
   unread: number;
@@ -54,18 +60,125 @@ interface UIMessage {
   avatar?: string;
 }
 
+interface Theme {
+  id: string;
+  name: string;
+  bgClass: string;
+  primaryGlow: string;
+  avatarGlow: string;
+  chatBubbleMe: string;
+  chatBubbleOther: string;
+  unreadBadge: string;
+  activeChatBg: string;
+  inputFocus: string;
+  onlineDot: string;
+}
+
+const themes: Theme[] = [
+  {
+    id: "midnight",
+    name: "Midnight Purple",
+    bgClass: "bg-linear-to-br from-slate-950 via-indigo-950 to-purple-900",
+    primaryGlow: "bg-linear-to-r from-purple-500 to-indigo-500",
+    avatarGlow: "bg-linear-to-r from-purple-400 to-indigo-400",
+    chatBubbleMe: "bg-gradient-to-r from-purple-500 to-indigo-500 text-white",
+    chatBubbleOther: "bg-white/10 text-white backdrop-blur",
+    unreadBadge: "bg-purple-500",
+    activeChatBg: "bg-white/10",
+    inputFocus: "focus:border-purple-400 focus:ring-purple-400/20",
+    onlineDot: "bg-green-400",
+  },
+  {
+    id: "cyberpunk",
+    name: "Cyberpunk Neon",
+    bgClass: "bg-linear-to-br from-zinc-950 via-neutral-900 to-zinc-950",
+    primaryGlow: "bg-linear-to-r from-cyan-500 to-fuchsia-500",
+    avatarGlow: "bg-linear-to-r from-cyan-400 to-fuchsia-400",
+    chatBubbleMe: "bg-gradient-to-r from-cyan-500 via-purple-600 to-fuchsia-500 text-white shadow-[0_0_10px_rgba(217,70,239,0.3)]",
+    chatBubbleOther: "bg-zinc-800/80 border border-cyan-500/20 text-white backdrop-blur",
+    unreadBadge: "bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.5)]",
+    activeChatBg: "bg-cyan-500/10 border-l-2 border-cyan-500",
+    inputFocus: "focus:border-cyan-400 focus:ring-cyan-400/20",
+    onlineDot: "bg-cyan-400 animate-pulse",
+  },
+  {
+    id: "ocean",
+    name: "Sapphire Ocean",
+    bgClass: "bg-linear-to-br from-slate-950 via-blue-950 to-cyan-950",
+    primaryGlow: "bg-linear-to-r from-blue-600 to-cyan-500",
+    avatarGlow: "bg-linear-to-r from-blue-400 to-cyan-400",
+    chatBubbleMe: "bg-gradient-to-r from-blue-600 to-cyan-500 text-white",
+    chatBubbleOther: "bg-slate-800/60 border border-blue-500/10 text-white",
+    unreadBadge: "bg-cyan-500",
+    activeChatBg: "bg-blue-500/10",
+    inputFocus: "focus:border-cyan-400 focus:ring-cyan-400/20",
+    onlineDot: "bg-emerald-400",
+  },
+  {
+    id: "garden",
+    name: "Emerald Garden",
+    bgClass: "bg-linear-to-br from-stone-950 via-emerald-950 to-teal-900",
+    primaryGlow: "bg-linear-to-r from-emerald-600 to-teal-500",
+    avatarGlow: "bg-linear-to-r from-emerald-400 to-teal-400",
+    chatBubbleMe: "bg-gradient-to-r from-emerald-600 to-teal-500 text-white",
+    chatBubbleOther: "bg-emerald-900/25 border border-emerald-500/10 text-white",
+    unreadBadge: "bg-emerald-500",
+    activeChatBg: "bg-emerald-500/10",
+    inputFocus: "focus:border-emerald-400 focus:ring-emerald-400/20",
+    onlineDot: "bg-emerald-400",
+  },
+  {
+    id: "rose",
+    name: "Sunset Rose",
+    bgClass: "bg-linear-to-br from-zinc-950 via-stone-900 to-rose-950",
+    primaryGlow: "bg-linear-to-r from-rose-500 to-amber-500",
+    avatarGlow: "bg-linear-to-r from-rose-400 to-amber-400",
+    chatBubbleMe: "bg-gradient-to-r from-rose-500 to-amber-500 text-white",
+    chatBubbleOther: "bg-stone-800/80 border border-rose-500/10 text-white",
+    unreadBadge: "bg-rose-500",
+    activeChatBg: "bg-rose-500/10",
+    inputFocus: "focus:border-rose-400 focus:ring-rose-400/20",
+    onlineDot: "bg-amber-400",
+  },
+  {
+    id: "slate",
+    name: "Crimson Slate",
+    bgClass: "bg-linear-to-br from-slate-950 via-slate-900 to-rose-950",
+    primaryGlow: "bg-linear-to-r from-red-600 to-rose-500",
+    avatarGlow: "bg-linear-to-r from-red-400 to-rose-400",
+    chatBubbleMe: "bg-gradient-to-r from-red-600 to-rose-500 text-white",
+    chatBubbleOther: "bg-slate-800/80 border border-red-500/10 text-white",
+    unreadBadge: "bg-red-600",
+    activeChatBg: "bg-red-500/10",
+    inputFocus: "focus:border-red-400 focus:ring-red-400/20",
+    onlineDot: "bg-red-400",
+  },
+];
+
 const Dashboard = (): JSX.Element => {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  // console.log('selectedChat',selectedChat)
+  console.log('selectedChat',selectedChat)
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
 
+  const [currentTheme, setCurrentTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem("chat-theme");
+    return themes.find((t) => t.id === saved) || themes[0];
+  });
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+
+  const handleThemeChange = (theme: Theme) => {
+    setCurrentTheme(theme);
+    localStorage.setItem("chat-theme", theme.id);
+    setShowThemeMenu(false);
+  };
+
   const [users, setUsers] = useState<IUser[]>([]); //   fetch full loged data
   // console.log('users',users)
-  const [loadingUsers, setLoadingUsers] = useState(false);
+  // const [loadingUsers, setLoadingUsers] = useState(false);
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
@@ -75,23 +188,33 @@ const Dashboard = (): JSX.Element => {
 
   console.log("messages", messages);
 
-  const [resChatUsers, setResChatUsers] = useState<IChat | null>(null);
-  // useEffect(() => {
-  //   setMessages()
-  // }, []);
+  const [socketState,setSocketState]=useState <Socket|null> ()
+
   /* add the database chat users in the chattUser after click the fetching function */
   const [chattUser, setChattUser] = useState<Chat[]>([]);
   console.log("chatttts", chattUser);
 
-  // useEffect(()=>{
-  //   console.log('demochat',chattUser)
-  // },[chattUser])
+
+useEffect(() => {
+  const token = localStorage.getItem("access-token");
+  if (!token) return;
+
+  const socket = io(import.meta.env.VITE_USER_BASE_URL, {
+    auth: { token },
+  });
+
+  setSocketState(socket);
+
+  return () => {
+    socket.disconnect();
+  };
+}, []);
 
   /*--------------------Fetching Users for Listing------------------------*/
 
   const fetchUsers = async () => {
     try {
-      setLoadingUsers(true);
+      // setLoadingUsers(true);
 
       // const token = localStorage.getItem("access-token");
 
@@ -103,10 +226,9 @@ const Dashboard = (): JSX.Element => {
       toast.error("Failed to load users");
       console.error(error);
     } finally {
-      setLoadingUsers(false);
+      // setLoadingUsers(false);
     }
   };
- 
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({});
@@ -122,46 +244,43 @@ const Dashboard = (): JSX.Element => {
 
   const selectedChatData = chattUser.find((chat) => chat._id === selectedChat);
 
-
-
   /*-----------------add chat users in the database --------------------*/
 
-const addChatUsers = async (userMail: string) => {
-  try {
-    const chat: IChat = await usersChatAdd(userMail);
-    if (!chat) return;
+  const addChatUsers = async (userMail: string) => {
+    try {
+      const chat: IChat = await usersChatAdd(userMail);
+      if (!chat) return;
 
-    const user = users.find((u) => u.email === userMail);
+      const user = users.find((u) => u.email === userMail);
 
-    setChattUser((prev) => {
-      if (prev.some((c) => c._id === chat._id)) return prev;
+      setChattUser((prev) => {
+        if (prev.some((c) => c._id === chat._id)) return prev;
 
-      return [
-        ...prev,
-        {
-          _id: chat._id,
-          name: user?.name ?? "Unknown User",
-          lastMessage:
-            typeof chat.lastMessage === "string"
-              ? chat.lastMessage
-              : chat.lastMessage?.content ?? "",
-          timestamp: new Date(chat.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          unread: 0,
-        },
-      ];
-    });
+        return [
+          ...prev,
+          {
+            _id: chat._id,
+            name: user?.name ?? "Unknown User",
+            lastMessage:
+              typeof chat.lastMessage === "string"
+                ? chat.lastMessage
+                : (chat.lastMessage?.content ?? ""),
+            timestamp: new Date(chat.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            unread: 0,
+          },
+        ];
+      });
 
-    setSelectedChat(chat._id);
-    setShowNewChat(false);
-    return chat;
-  } catch {
-    toast.error("Failed to start chat");
-  }
-};
-
+      setSelectedChat(chat._id);
+      setShowNewChat(false);
+      return chat;
+    } catch {
+      toast.error("Failed to start chat");
+    }
+  };
 
   /*-----------------Fetching chat Users------------------*/
 
@@ -171,7 +290,7 @@ const addChatUsers = async (userMail: string) => {
 
       const res = await usersChatFetch(chatId);
       console.log("resssss", res);
-      setResChatUsers(res);
+      // setResChatUsers(res);
 
       // Update the chat in chattUser with user information
       if (res && res.users && res.users.length > 0) {
@@ -198,71 +317,65 @@ const addChatUsers = async (userMail: string) => {
     }
   };
 
+  //   const normalizeChats = (chats: IChat[], currentUserId: string): Chat[] => {
+  //     console.log('normalizeChats',currentUserId)
+  //   return chats.map(chat => {
+  //     const otherUser = chat.users.find(u => u._id !== currentUserId);
 
-//   const normalizeChats = (chats: IChat[], currentUserId: string): Chat[] => {
-//     console.log('normalizeChats',currentUserId)
-//   return chats.map(chat => {
-//     const otherUser = chat.users.find(u => u._id !== currentUserId);
+  //     return {
+  //       ...chat,
+  //       name: otherUser?.name ?? "Unknown User",
+  //       lastMessage: chat.lastMessage?.content ?? "",
+  //       timestamp: chat.lastMessage
+  //         ? new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
+  //             hour: "2-digit",
+  //             minute: "2-digit",
+  //           })
+  //         : "",
+  //     };
+  //   });
+  // };
+  const normalizeChats = (chats: IChat[], currentUserId: string): Chat[] => {
+    console.log("currentUserId", currentUserId);
+    return chats.map((chat) => {
+      const otherUser = chat.users.find(
+  (u) => String(u._id) !== String(currentUserId)
+);
+      console.log("chat._id", chat._id);
+      console.log("otherUser", otherUser);
 
-//     return {
-//       ...chat,
-//       name: otherUser?.name ?? "Unknown User",
-//       lastMessage: chat.lastMessage?.content ?? "",
-//       timestamp: chat.lastMessage
-//         ? new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
-//             hour: "2-digit",
-//             minute: "2-digit",
-//           })
-//         : "",
-//     };
-//   });
-// };
-const normalizeChats = (
-  chats: IChat[],
-  currentUserId: string
-): Chat[] => {
-  return chats.map(chat => {
-    const otherUser = chat.users.find(u => u._id !== currentUserId);
-
-    return {
-      _id: chat._id,
-      name: otherUser?.name ?? "Unknown User",
-      lastMessage:
-        typeof chat.lastMessage === "string"
-          ? chat.lastMessage
-          : chat.lastMessage?.content ?? "",
-      timestamp: new Date(chat.createdAt).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      unread: chat.unreadCounts?.[currentUserId] ?? 0,
-    };
-  });
-};
-
-
-
-
-
-// fetch users in the useEffect
-useEffect(() => {
-  const loadChats = async () => {
-    try {
-      const chats = await getAllChats();
-      const userId = localStorage.getItem("userId"); // or from auth state
-      console.log('userId',userId)
-      setChattUser(normalizeChats(chats, userId!));
-    } catch (err) {
-      console.error("Failed to load chats", err);
-    }
+      return {
+        _id: chat._id,
+        name: otherUser?.name ?? "Unknown User",
+         receiverId: String(otherUser?._id),
+        lastMessage:
+          typeof chat.lastMessage === "string"
+            ? chat.lastMessage
+            : (chat.lastMessage?.content ?? ""),
+        timestamp: new Date(chat.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        unread: chat.unreadCounts?.[currentUserId] ?? 0,
+      };
+    });
   };
 
-  loadChats();
-}, []);
+  // fetch users in the useEffect
+  useEffect(() => {
+    const loadChats = async () => {
+      try {
+        const chats = await getAllChats();
+        const userId = localStorage.getItem("userId"); // or from auth state
+        console.log("userId", userId);
+        setChattUser(normalizeChats(chats, userId!));
+      } catch (err) {
+        console.error("Failed to load chats", err);
+      }
+    };
 
-
-
-
+    loadChats();
+  }, []);
 
   // when i click the user's pass the _id in the backend and fetch the specific user message
 
@@ -303,22 +416,33 @@ useEffect(() => {
     try {
       setIsSending(true);
       console.log("handleSendMessage");
-      const messageDatas = await sendMessage({
-        chatId: selectedChat,
-        content: messageInput.trim(),
-      });
-      console.log("messageDatas", messageDatas);
-      console.log("messageDatas", messageDatas.messages);
+      // const messageDatas = await sendMessage({
+      //   chatId: selectedChat,
+      //   content: messageInput.trim(),
+      // });
+      const message={
+        chatId:selectedChat,
+        receiverId:selectedChatData?.receiverId,
+        content:messageInput.trim()
+      }
+      socketState?.emit("send-message",message)
+      console.log("message");
       // console.log('messageDatas',messageDatas)
 
-      if (!messageDatas) return;
-
       // const uiMessage = mapIMessageToUIMessage(messageDatas);
-      const latestMessage =
-      messageDatas.messages[messageDatas.messages.length-1];
+      // const latestMessage =
+      //   messageDatas.messages[messageDatas.messages.length - 1];
 
-
-      setMessages((prev) => [...prev,mapIMessageToUIMessage(latestMessage),]);
+      const newUIMessage: UIMessage = {
+        id: Math.random().toString(36).substring(7),
+        text: messageInput.trim(),
+        sender: "me",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+      setMessages((prev) => [...prev, newUIMessage]);
       setMessageInput("");
     } catch (error) {
       console.error("Failed to send message", error);
@@ -339,12 +463,34 @@ useEffect(() => {
     scrollToBottom();
   }, [messages, selectedChat]);
 
+  useEffect(() => {
+  if (!socketState) return;
+
+  socketState.on("receive-message", (message) => {
+    const uiMessage = mapIMessageToUIMessage(message);
+
+    setMessages((prev) => [...prev, uiMessage]);
+  });
+
+  return () => {
+    socketState.off("receive-message");
+  };
+}, [socketState]);
+
   const filteredChats = chattUser.filter((chat) =>
     chat.name?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+  const currentUserId = localStorage.getItem("userId");
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch = u.name
+      .toLowerCase()
+      .includes(userSearch.toLowerCase());
+    const isLoggedInUser = String(u._id) === String(currentUserId);
+    return matchesSearch && !isLoggedInUser;
+  });
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-linear-to-br from-slate-950 via-indigo-950 to-purple-900 text-white">
+    <div className={`flex h-screen w-full overflow-hidden text-white transition-colors duration-500 ${currentTheme.bgClass}`}>
       <ToastContainer />
 
       {/* Sidebar */}
@@ -357,27 +503,67 @@ useEffect(() => {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-r from-purple-500 to-indigo-500">
-              <IconMessageCircle className="h-5 w-5 text-white" />
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full text-white transition-all duration-500 ${currentTheme.primaryGlow}`}>
+              <IconMessageCircle className="h-5 w-5" />
             </div>
             <h1 className="text-xl font-bold">Messages</h1>
           </div>
-          <div className="relative">
+          <div className="relative flex items-center">
             <button
               onClick={() => {
                 setShowNewChat(true);
                 fetchUsers(); // 🔥 THIS WAS MISSING
               }}
               className="mr-1 rounded-full p-2 transition hover:bg-white/10"
+              title="New Chat"
             >
               <GrAdd className="h-5 w-5" />
             </button>
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
+              onClick={() => {
+                setShowThemeMenu(!showThemeMenu);
+                setShowUserMenu(false);
+              }}
+              className="mr-1 rounded-full p-2 transition hover:bg-white/10 text-slate-300 hover:text-white"
+              title="Change Theme"
+            >
+              <IconPalette className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => {
+                setShowUserMenu(!showUserMenu);
+                setShowThemeMenu(false);
+              }}
               className="rounded-full p-2 transition hover:bg-white/10"
+              title="Menu"
             >
               <IconDotsVertical className="h-5 w-5" />
             </button>
+
+            <AnimatePresence>
+              {showThemeMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 top-12 z-50 w-52 rounded-xl bg-slate-900/95 p-2 backdrop-blur-xl ring-1 ring-white/20 shadow-2xl"
+                >
+                  <p className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Select Theme</p>
+                  {themes.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleThemeChange(t)}
+                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-white/10 ${
+                        currentTheme.id === t.id ? "bg-white/15 font-semibold text-white" : "text-slate-300"
+                      }`}
+                    >
+                      <span className={`h-3 w-3 rounded-full shrink-0 ${t.primaryGlow}`} />
+                      {t.name}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <AnimatePresence>
               {showUserMenu && (
@@ -385,19 +571,19 @@ useEffect(() => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 top-12 z-50 w-48 rounded-xl bg-white/10 p-2 backdrop-blur-xl ring-1 ring-white/20"
+                  className="absolute right-0 top-12 z-50 w-48 rounded-xl bg-slate-900/95 p-2 backdrop-blur-xl ring-1 ring-white/20 shadow-2xl"
                 >
-                  <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-white/10">
+                  <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10">
                     <IconUser className="h-4 w-4" />
                     Profile
                   </button>
-                  <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-white/10">
+                  <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10">
                     <IconSettings className="h-4 w-4" />
                     Settings
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-300 transition hover:bg-white/10"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-400 transition hover:bg-white/10"
                   >
                     <IconLogout className="h-4 w-4" />
                     Logout
@@ -446,18 +632,12 @@ useEffect(() => {
                           placeholder="Find users..."
                           value={userSearch}
                           onChange={(e) => setUserSearch(e.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-white/5 px-10 py-2.5 text-sm text-white placeholder:text-slate-400 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
+                          className={`w-full rounded-xl border border-white/15 bg-white/5 px-10 py-2.5 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 ${currentTheme.inputFocus}`}
                         />
                       </div>
                     </div>
                     <div className="mt-4 max-h-72 overflow-y-auto">
-                      {users
-                        .filter((u) =>
-                          u.name
-                            .toLowerCase()
-                            .includes(userSearch.toLowerCase()),
-                        )
-                        .map((u) => (
+                      {filteredUsers.map((u) => (
                           <button
                             key={u._id}
                             className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition hover:bg-white/10"
@@ -470,7 +650,7 @@ useEffect(() => {
                             }}
                           >
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-indigo-400 text-sm font-semibold">
+                              <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all duration-500 ${currentTheme.avatarGlow}`}>
                                 {/* {u.name.charAt(0)} */}
                               </div>
                               <div>
@@ -502,7 +682,7 @@ useEffect(() => {
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-white/5 px-10 py-2.5 text-sm text-white placeholder:text-slate-400 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
+              className={`w-full rounded-xl border border-white/15 bg-white/5 px-10 py-2.5 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 ${currentTheme.inputFocus}`}
             />
           </div>
         </div>
@@ -518,21 +698,25 @@ useEffect(() => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => {
+                        if (selectedChat && selectedChat !== chat._id) {
+                          socketState?.emit("leave-chat", selectedChat);
+                        }
+                        socketState?.emit("join-chat", chat._id);
                       setSelectedChat(chat._id);
                       fetchMessage(chat._id);
                     }}
-                    className={`group relative flex cursor-pointer items-center gap-3 border-b border-white/5 p-4 transition ${
+                    className={`group relative flex cursor-pointer items-center gap-3 border-b border-white/5 p-4 transition-all duration-300 ${
                       selectedChat === chat._id
-                        ? "bg-white/10"
+                        ? currentTheme.activeChatBg
                         : "hover:bg-white/5"
                     }`}
                   >
                     <div className="relative">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-indigo-400 text-sm font-semibold">
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold transition-all duration-500 ${currentTheme.avatarGlow}`}>
                         {chat.name?.charAt(0)?.toUpperCase() || "?"}
                       </div>
                       {chat.isOnline && (
-                        <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-950 bg-green-400" />
+                        <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-950 transition-colors duration-500 ${currentTheme.onlineDot}`} />
                       )}
                     </div>
                     <div className="flex-1 overflow-hidden">
@@ -549,7 +733,7 @@ useEffect(() => {
                           {chat.lastMessage}
                         </p>
                         {(chat.unread ?? 0) > 0 && (
-                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-purple-500 px-1.5 text-xs font-semibold text-white">
+                          <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold text-white transition-colors duration-500 ${currentTheme.unreadBadge}`}>
                             {chat.unread ?? 0}
                           </span>
                         )}
@@ -574,11 +758,11 @@ useEffect(() => {
             >
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-indigo-400 text-sm font-semibold">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all duration-500 ${currentTheme.avatarGlow}`}>
                     {selectedChatData?.name?.charAt(0)}
                   </div>
                   {selectedChatData?.isOnline && (
-                    <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-950 bg-green-400" />
+                    <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-950 transition-colors duration-500 ${currentTheme.onlineDot}`} />
                   )}
                 </div>
                 <div>
@@ -608,8 +792,8 @@ useEffect(() => {
               <div className="mx-auto max-w-3xl space-y-4">
                 <AnimatePresence>
                   {messages.map((message, index) => (
-                    <motion.div
-                      // key={message.id}
+                    <motion.div 
+                      key={message.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -627,20 +811,20 @@ useEffect(() => {
                         }`}
                       >
                         {message.sender === "other" && (
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-purple-400 to-indigo-400 text-xs font-semibold">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all duration-500 ${currentTheme.avatarGlow}`}>
                             {selectedChatData?.name?.charAt(0)}
                           </div>
                         )}
                         <div
-                          className={`rounded-2xl px-4 py-2.5 ${
+                          className={`rounded-2xl px-4 py-2.5 transition-all duration-500 ${
                             message.sender === "me"
-                              ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
-                              : "bg-white/10 text-white backdrop-blur"
+                              ? currentTheme.chatBubbleMe
+                              : currentTheme.chatBubbleOther
                           }`}
                         >
                           <p className="text-sm">{message.text}</p>
                           <p
-                            className={`mt-1 text-xs ${
+                            className={`mt-1 text-xs transition-colors duration-500 ${
                               message.sender === "me"
                                 ? "text-white/70"
                                 : "text-slate-400"
@@ -675,7 +859,7 @@ useEffect(() => {
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      className="w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
+                      className={`w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 ${currentTheme.inputFocus}`}
                     />
                   </div>
                   <button className="rounded-full p-2 transition hover:bg-white/10">
@@ -684,7 +868,7 @@ useEffect(() => {
                   <button
                     onClick={handleSendMessage}
                     disabled={!messageInput.trim() || isSending}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                    className={`flex h-10 w-10 items-center justify-center rounded-full text-white transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 ${currentTheme.primaryGlow}`}
                     title="Send message"
                   >
                     <IconSend className="h-5 w-5" />

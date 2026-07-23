@@ -61,17 +61,32 @@ async findByChatId(id: Types.ObjectId): Promise<IChat | null> {
   }
 }
 
-// async findupdateById( id: Types.ObjectId,update: Record<string, any>,): Promise<IChat | null> {
-//   try {
-//     console.log('updateById')
-//     return await this.model.updateById(id,update,{ new: true }).exec();
-//   } catch (error) {
-//           if (error instanceof Error) {
-//         throw new Error(`Database Error (findOneByUsers): ${error.message}`);
-//       }
-//       throw new Error("Unknown error occurred in findOneByUsers");
-//   }
-// }
+async updateAndPopulate(id: Types.ObjectId, update: Record<string, any>): Promise<IChat | null> {
+  try {
+    return await this.model.findByIdAndUpdate(id, update, { new: true })
+      .populate({
+        path: "users",
+        select: "name email"
+      })
+      .populate({
+        path: "messages",
+        populate: {
+          path: "senderId",
+          select: "name email"
+        }
+      })
+      .populate({
+        path: "lastMessage",
+        select: "content senderId createdAt"
+      })
+      .exec();
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(`Database Error (updateAndPopulate): ${error.message}`);
+    }
+    throw new Error("Unknown error occurred in updateAndPopulate");
+  }
+}
 
 async findAllByUserId(userId: Types.ObjectId): Promise<IChat[]> {
   try {

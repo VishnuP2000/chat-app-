@@ -2,19 +2,24 @@ import Container, { Service } from "typedi";
 import { IMessageService } from "../../interface/messages/message.IService";
 import { IChatRepository } from "../../../repositories/interface/chat.Irepository";
 import { chatRepository } from "../../../repositories/implementations/chat.repository";
+import { IMessageRepository } from "../../../repositories/interface/message.IRepository";
+import { messageRepository } from "../../../repositories/implementations/message.repository";
 import { IChat } from "../../../models/chat.modal";
 import { giveChatResult } from "../../../Interfaces/Interfaces";
 import { Types } from "mongoose";
 import { AppError } from "../../../utils/customError";
 import { HttpStatus } from "../../../enum/httpStatus";
-import MessageModel from "../../../models/message.modal";
 
 @Service()
 export class messageService implements IMessageService {
   private chatRepo: IChatRepository<IChat>;
+  private messageRepo: IMessageRepository;
+
   constructor() {
     this.chatRepo = chatRepository;
+    this.messageRepo = messageRepository;
   }
+
   async foundMessages(
     chatId: string,
     content: string,
@@ -26,31 +31,35 @@ export class messageService implements IMessageService {
     const messageObjectId = new Types.ObjectId(chatId);
     const senderIdObjectId = new Types.ObjectId(senderId);
     console.log("messageObjectId", messageObjectId);
-    const existingChat = await this.chatRepo.findByChatId(messageObjectId);
-    console.log("chatRepo existingChat", existingChat);
+    
+    // 1️⃣ Fast lookup just to verify chat exists and get users
+    const existingChat = await (this.chatRepo as any).findById(chatId);
 
     if (!existingChat) {
       throw new AppError("Chat not found", HttpStatus.BAD_REQUEST);
     }
 
     const receiverId = existingChat.users.find(
-      (u) => u._id.toString() !== senderId,
-    )?._id;
+      (u: any) => u.toString() !== senderId,
+    );
 
     if (!receiverId) {
       throw new AppError("Receiver not foundd", HttpStatus.BAD_REQUEST);
     }
 
-    console.log("create message");
-    // 1️⃣ Create message
-    const message = await MessageModel.create({
+    console.log("create message via messageRepo");
+    // 1️⃣ Create message using repository
+    const message = await this.messageRepo.create({
       chatId: messageObjectId,
       senderId: senderIdObjectId,
       content,
-    });
+      status: "sent",
+      readBy: [senderIdObjectId]
+    } as any);
     console.log("message", message);
-    // 2️⃣ Update chat
-    await this.chatRepo.updateById(messageObjectId, {
+
+    // 3️⃣ Update chat and Re-fetch populated relations in one go
+    const updatedChat = await this.chatRepo.updateAndPopulate(messageObjectId, {
       $push: { messages: message._id },
       $set: { lastMessage: message._id },
       $inc: {
@@ -58,8 +67,6 @@ export class messageService implements IMessageService {
       },
     });
 
-    // 3️⃣ Re-fetch chat so it includes the NEW last message & populated relations
-    const updatedChat = await this.chatRepo.findByChatId(messageObjectId);
     console.log("updatedChat after new message", updatedChat);
 
     if (!updatedChat) {
@@ -79,6 +86,38 @@ export class messageService implements IMessageService {
       throw new AppError("Chat not found", HttpStatus.BAD_REQUEST);
     }
     return { success: true, message: "message send", data: response };
+  }
+
+  async markMessagesRead(chatId: string, userId: string): Promise<giveChatResult> {
+    console.log("markMessagesRead service", chatId, userId);
+    const chatObjectId = new Types.ObjectId(chatId);
+    const userObjectId = new Types.ObjectId(userId);
+
+    await this.messageRepo.markAsRead(chatObjectId, userObjectId);
+
+    await this.chatRepo.updateById(chatObjectId, {
+      $set: { [`unreadCounts.${userId}`]: 0 }
+    });
+
+    const updatedChat = await this.chatRepo.findByChatId(chatObjectId);
+    if (!updatedChat) {
+      throw new AppError("Chat not found after read update", HttpStatus.BAD_REQUEST);
+    }
+    return { success: true, message: "Messages marked as read", data: updatedChat };
+  }
+
+  async markMessagesDelivered(chatId: string, userId: string): Promise<giveChatResult> {
+    console.log("markMessagesDelivered service", chatId, userId);
+    const chatObjectId = new Types.ObjectId(chatId);
+    const userObjectId = new Types.ObjectId(userId);
+
+    await this.messageRepo.markAsDelivered(chatObjectId, userObjectId);
+
+    const updatedChat = await this.chatRepo.findByChatId(chatObjectId);
+    if (!updatedChat) {
+      throw new AppError("Chat not found after delivery update", HttpStatus.BAD_REQUEST);
+    }
+    return { success: true, message: "Messages marked as delivered", data: updatedChat };
   }
 }
 export const messageservice = Container.get(messageService);
