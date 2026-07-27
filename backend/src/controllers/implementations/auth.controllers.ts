@@ -1,7 +1,7 @@
-import Container, { Service } from "typedi";
+import Container, { Inject, Service } from "typedi";
 import { Request, response, Response } from "express";
 import { IAuthService } from "../../services/interface/auth/auth.Iservice";
-import { authService } from "../../services/implementations/auth/auth.service";
+import { AuthService } from "../../services/implementations/auth/auth.service";
 import {
   registerSchema,
   signInSchema,
@@ -13,15 +13,15 @@ import jwt from "jsonwebtoken";
 
 @Service()
 export class AuthControllers {
-  private authservice: IAuthService;
-  // private chatservice: IChatService;
-  constructor() {
-    this.authservice = authService;
-    // this.chatservice = chatService;
-  }
+  constructor(
+     @Inject(()=>AuthService)
+    private readonly authService:IAuthService
+  ){}
   async signUp(req: Request, res: Response): Promise<Response> {
     try {
       console.log("requu", req.body);
+      console.log("requu", req.file);
+      let image;
       const validationCheck = registerSchema.safeParse(req.body);
 
       if (!validationCheck.success) {
@@ -30,9 +30,8 @@ export class AuthControllers {
           message: validationCheck.error,
         });
       }
-
       console.log("after complate validations");
-      const response = await this.authservice.signUp(req.body);
+      const response = await this.authService.signUp(req.body,req.file);
       console.log("res", response);
 
       return res.status(201).json({ data: response }); // <- IMPORTANT
@@ -62,9 +61,9 @@ export class AuthControllers {
         });
       }
 
-      const response = await this.authservice.signIn({ email, password });
+      const response = await this.authService.signIn({ email, password });
 
-      console.log("eigth",response);
+      console.log("response auth.controller",response);
       setCookies(res, "refreshToken", String(response.refreshToken));
 
       console.log("suceeeeeeeeee");

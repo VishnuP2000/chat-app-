@@ -25,6 +25,7 @@ export const registerSocketEvents = (io: Server) => {
 
     // join-chat: User joins a specific chat room
     socket.on("join-chat", (data: { chatId: string } | string) => {
+      console.log('enter join-chat')
       const chatId = typeof data === 'string' ? data : data?.chatId;
       if (chatId) {
         socket.join(chatId);
@@ -34,6 +35,7 @@ export const registerSocketEvents = (io: Server) => {
 
     // leave-chat: User leaves a specific chat room
     socket.on("leave-chat", (data: { chatId: string } | string) => {
+      console.log('enter leave-chat')
       const chatId = typeof data === 'string' ? data : data?.chatId;
       if (chatId) {
         socket.leave(chatId);
@@ -43,6 +45,7 @@ export const registerSocketEvents = (io: Server) => {
 
     // send-message: Alice sends a message to Bob
     socket.on("send-message", async (data: { chatId: string; receiverId: string; content: string }) => {
+      console.log('ente soket')
       const { chatId, receiverId, content } = data;
       if (!currentUserId) {
         console.error("send-message error: currentUserId not set for socket " + socket.id);
@@ -52,10 +55,13 @@ export const registerSocketEvents = (io: Server) => {
       try {
         // Save using MessageService (which uses MessageRepository)
         const result = await messageservice.foundMessages(chatId, content, currentUserId);
+        console.log('result ',result)
         const chat = result.data;
 
         if (chat && chat.messages && chat.messages.length > 0) {
+          console.log('enter if ')
           const latestMessage = chat.messages[chat.messages.length - 1];
+          console.log('lastMessage',latestMessage)
 
           // Emit to all users in the chat room except sender
           socket.to(chatId).emit("receive-message", latestMessage);
@@ -63,6 +69,7 @@ export const registerSocketEvents = (io: Server) => {
           // If the receiver is online, notify them (potentially multiple sockets)
           const receiverSockets = onlineUsers.get(receiverId);
           if (receiverSockets && receiverSockets.size > 0) {
+            console.log('enter the receiverSokets')
             receiverSockets.forEach(socketId => {
               io.to(socketId).emit("new-message-notification", {
                 chatId,

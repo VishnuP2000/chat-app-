@@ -10,6 +10,9 @@ export interface IChatRoom {
 
 export interface IUser {
   _id: string;
+  image:{
+    url:string
+  }  
   name: string;
   email: string;
 }

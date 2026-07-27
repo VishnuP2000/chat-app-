@@ -12,14 +12,9 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { signInRequest } from "@/service/Api/auth.userApi";
+import { useAuth } from "@/context/AuthContext";
 
-const LabelInputContainer = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}): JSX.Element => (
+const LabelInputContainer = ({children,className,}: {children: React.ReactNode;className?: string;}): JSX.Element => (
   <div className={cn("mb-3 flex w-full flex-col space-y-2", className)}>
     {children}
   </div>
@@ -34,6 +29,7 @@ type FormErrors = Partial<Record<keyof FormData, string>>;
 
 function LoginPage(): JSX.Element {
   const navigate = useNavigate();
+  const {setUser}=useAuth()
 
   const [form, setForm] = useState<FormData>({ email: "", password: "" });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -64,11 +60,12 @@ function LoginPage(): JSX.Element {
       const payload = { email: form.email, password: form.password };
       const response = await signInRequest(payload);
       const { accessToken, user } = response.data;
+      console.log("response", response.data.user);
       localStorage.setItem("access-token", accessToken);
-      console.log("accessToken", accessToken);
       localStorage.setItem("userId", user.id);
+      setUser(response.data.user)
       console.log("userId", user.id);
-      if (response.data.success) navigate("/dashboard");
+      if (response.data.success) navigate("/showUsers");
       else toast.error(response.data.message || "Invalid credentials");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Something went wrong");
@@ -129,6 +126,7 @@ function LoginPage(): JSX.Element {
             </motion.div>
 
             <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+             
               <motion.button
                 type="button"
                 variants={fadeInUp as any}
@@ -228,8 +226,8 @@ function LoginPage(): JSX.Element {
                 className="relative mt-2 inline-flex h-11 w-full items-center justify-center overflow-hidden rounded-full bg-indigo-500 px-6 text-sm font-semibold text-white shadow-xl transition"
                 type="submit"
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 opacity-80" />
-                <span className="relative">Log In</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 opacity-80 cursor-pointer" />
+                <span className="relative cursor-pointer">Log In</span>
               </motion.button>
             </form>
 

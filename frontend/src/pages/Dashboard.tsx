@@ -160,7 +160,6 @@ const Dashboard = (): JSX.Element => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  console.log('selectedChat',selectedChat)
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -186,13 +185,10 @@ const Dashboard = (): JSX.Element => {
 
   const [messages, setMessages] = useState<UIMessage[]>([]);
 
-  console.log("messages", messages);
-
   const [socketState,setSocketState]=useState <Socket|null> ()
 
   /* add the database chat users in the chattUser after click the fetching function */
   const [chattUser, setChattUser] = useState<Chat[]>([]);
-  console.log("chatttts", chattUser);
 
 
 useEffect(() => {
@@ -212,23 +208,7 @@ useEffect(() => {
 
   /*--------------------Fetching Users for Listing------------------------*/
 
-  const fetchUsers = async () => {
-    try {
-      // setLoadingUsers(true);
 
-      // const token = localStorage.getItem("access-token");
-
-      const res = await usersFetch();
-      console.log("res", res);
-      console.log("res.data.users", res);
-      setUsers(res);
-    } catch (error) {
-      toast.error("Failed to load users");
-      console.error(error);
-    } finally {
-      // setLoadingUsers(false);
-    }
-  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({});
@@ -411,15 +391,12 @@ useEffect(() => {
   };
 
   const handleSendMessage = async () => {
+    console.log('handleSendMessage')
     if (!messageInput.trim() || !selectedChat) return;
 
     try {
       setIsSending(true);
-      console.log("handleSendMessage");
-      // const messageDatas = await sendMessage({
-      //   chatId: selectedChat,
-      //   content: messageInput.trim(),
-      // });
+      console.log("enter handleSendMessage");
       const message={
         chatId:selectedChat,
         receiverId:selectedChatData?.receiverId,
@@ -427,11 +404,6 @@ useEffect(() => {
       }
       socketState?.emit("send-message",message)
       console.log("message");
-      // console.log('messageDatas',messageDatas)
-
-      // const uiMessage = mapIMessageToUIMessage(messageDatas);
-      // const latestMessage =
-      //   messageDatas.messages[messageDatas.messages.length - 1];
 
       const newUIMessage: UIMessage = {
         id: Math.random().toString(36).substring(7),
@@ -442,6 +414,7 @@ useEffect(() => {
           minute: "2-digit",
         }),
       };
+      console.log('enter newUIMessage')
       setMessages((prev) => [...prev, newUIMessage]);
       setMessageInput("");
     } catch (error) {
@@ -512,7 +485,6 @@ useEffect(() => {
             <button
               onClick={() => {
                 setShowNewChat(true);
-                fetchUsers(); // 🔥 THIS WAS MISSING
               }}
               className="mr-1 rounded-full p-2 transition hover:bg-white/10"
               title="New Chat"

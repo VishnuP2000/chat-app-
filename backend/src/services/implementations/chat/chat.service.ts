@@ -1,4 +1,4 @@
-import Container, { Service } from "typedi";
+import Container, { Inject, Service } from "typedi";
 import {
   getAllDto,
   GetChatDto,
@@ -13,7 +13,7 @@ import {
 import { IAuthService } from "../../interface/auth/auth.Iservice";
 import { IUser } from "../../../models/user.model";
 import { IUserRepository } from "../../../repositories/interface/user/user.IRepository";
-import { userRepository } from "../../../repositories/implementations/user.repository";
+import { UserRepository, userRepository } from "../../../repositories/implementations/user.repository";
 import { BaseRepository } from "../../../repositories/base.repository";
 import { IRepository } from "../../../repositories/interface/base.Irepository";
 import { AppError } from "../../../utils/customError";
@@ -22,23 +22,22 @@ import bcrypt, { compare } from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../../../utils/jwt";
 import { id } from "zod/v4/locales";
 import { ChatModel, IChat } from "../../../models/chat.modal";
-import { chatRepository } from "../../../repositories/implementations/chat.repository";
+import { ChatRepository, chatRepository } from "../../../repositories/implementations/chat.repository";
 import { IChatRepository } from "../../../repositories/interface/chat.Irepository";
 import { Types } from "mongoose";
 import { IChatService } from "../../interface/chat/chat.IService";
 @Service()
 export class ChatService implements IChatService {
-  private userRepo: IUserRepository;
-  private chatRepo: IChatRepository<IChat>;
+  constructor(
+    @Inject(()=>UserRepository)
+    private readonly userRepo:IUserRepository,
+    @Inject(()=>ChatRepository)
+    private readonly chatRepo:IChatRepository<IChat>
+  ){}
 
-  constructor() {
-    this.userRepo = userRepository;
-    this.chatRepo = chatRepository;
-  }
-
-  async getAllUsers(): Promise<IUser[]> {
-    console.log("service");
-    return this.userRepo.findAllUsers();
+  async getAllUsers(): Promise<IUser[]>  {
+    console.log("getAllUsers");
+     return await this.userRepo.findAllUsers();
   }
 
   async createOrGetChat(dto: GetChatDto): Promise<giveChatResult> {

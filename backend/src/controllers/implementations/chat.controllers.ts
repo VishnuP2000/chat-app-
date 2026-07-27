@@ -1,7 +1,7 @@
 // backend/src/controllers/implementations/chat.controllers.ts
-import Container, { Service } from "typedi";
+import Container, { Inject, Service } from "typedi";
 import { Request, Response } from "express";
-import { chatService } from "../../services/implementations/chat/chat.service";
+import { ChatService } from "../../services/implementations/chat/chat.service";
 import { IChatService } from "../../services/interface/chat/chat.IService";
 import jwt from "jsonwebtoken";
 import { AppError } from "../../utils/customError";
@@ -10,16 +10,16 @@ import { AuthRequset } from "../../Interfaces/Interfaces";
 
 @Service()
 export class ChatControllers {
-  private chatservice: IChatService;
-  constructor() {
-    this.chatservice = chatService;
-  }
+  constructor(
+    @Inject(()=>ChatService)
+    private readonly chatservice:IChatService
+  ){}
 
   async getUsers(req: Request, res: Response) {
     try {
       console.log("hello");
       const users = await this.chatservice.getAllUsers();
-      console.log("get users");
+      console.log("get users",users);
       return res.status(200).json({
         success: true,
         users,

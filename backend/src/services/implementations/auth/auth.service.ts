@@ -1,7 +1,5 @@
-import Container, { Service } from "typedi";
+import Container, { Inject, Service } from "typedi";
 import {
-  getAllDto,
-  GetChatDto,
   SignInDto,
   SignUpDto,
 } from "../../../dto/user/auth.dtos";
@@ -13,7 +11,7 @@ import {
 import { IAuthService } from "../../interface/auth/auth.Iservice";
 import { IUser } from "../../../models/user.model";
 import { IUserRepository } from "../../../repositories/interface/user/user.IRepository";
-import { userRepository } from "../../../repositories/implementations/user.repository";
+import { UserRepository, userRepository } from "../../../repositories/implementations/user.repository";
 import { BaseRepository } from "../../../repositories/base.repository";
 import { IRepository } from "../../../repositories/interface/base.Irepository";
 import { AppError } from "../../../utils/customError";
@@ -22,27 +20,50 @@ import bcrypt, { compare } from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../../../utils/jwt";
 import { id } from "zod/v4/locales";
 import { ChatModel, IChat } from "../../../models/chat.modal";
-import { chatRepository } from "../../../repositories/implementations/chat.repository";
+import { ChatRepository, chatRepository } from "../../../repositories/implementations/chat.repository";
 // import  IBaseRepository  from "../../../repositories/interface/base.Irepository";
 import { IChatRepository } from "../../../repositories/interface/chat.Irepository";
 import { Types } from "mongoose";
+import { uploadToCloudinary } from "../../../utils/CloudinaryUploads";
 // import BaseRepository  from "../../../repositories/base.repository";
+const fs=require('fs')
 @Service()
 export class AuthService implements IAuthService {
-  private userRepo: IUserRepository;
-  private chatRepo: IChatRepository<IChat>;
-  // private chatRepo: IRepository<IChat>;
-  constructor() {
-    this.userRepo = userRepository;
-    this.chatRepo = chatRepository;
-  }
-
-  async signUp(userData: SignUpDto): Promise<AuthResponse> {
+    constructor(
+    @Inject(() => UserRepository)
+    private readonly userRepo: IUserRepository,
+    // @Inject(() => ChatRepository)
+    // private readonly chatRepository: IChatRepository
+  ) {}
+  async signUp(userData: SignUpDto, file?: Express.Multer.File): Promise<AuthResponse> {
     try {
       const { name, email, password, confirmPassword } = userData;
+      let Image;
       console.log("service layer", name, email, password, confirmPassword);
+      console.log("file", file);
+//      try {
+//   if (file?.path) {
+//     Image = await uploadToCloudinary(file.path);
+//     fs.unlinkSync(file.path);
+//   }
+// } catch (error) {
+//   if (file?.path && fs.existsSync(file.path)) {
+//     fs.unlinkSync(file.path);
+//   }
+
+//   throw new AppError(
+//     "Image upload failed",
+//     HttpStatus.INTERNAL_SERVER_ERROR
+//   );
+// }
+
+ if (file?.path) {
+    Image = await uploadToCloudinary(file.path);
+    fs.unlinkSync(file.path);
+  }
 
       const existUser = await this.userRepo.findUserByEmail(email);
+      console.log("existUser", existUser);
 
       if (existUser) {
         console.log("existUser is already exist");
@@ -51,11 +72,11 @@ export class AuthService implements IAuthService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      console.log("exist", existUser);
       const hashedPassword = await bcrypt.hash(password, 8);
       console.log("hashedPassword", hashedPassword);
 
       await this.userRepo.create({
+        image:Image,
         name,
         email,
         password: hashedPassword,
@@ -75,23 +96,19 @@ export class AuthService implements IAuthService {
   async signIn(userData: SignInDto): Promise<SignInResult> {
     try {
       const { email, password } = userData;
-      console.log("fifth", email);
+      console.log("signIn in authService", email);
       const exist = await this.userRepo.findUserByEmail(email);
-      console.log(
-        "existtttttttttttttttttttttttttttttttttttttttttttttttttt",
-        exist,
-      );
+    
       if (!exist) {
         throw new AppError("invalid credential", HttpStatus.BAD_REQUEST);
       }
-      console.log("sixth");
       let comparePassword = await bcrypt.compare(password, exist.password);
       if (!comparePassword) {
         throw new AppError("invalide password", HttpStatus.BAD_REQUEST);
       }
       const accessToken = generateAccessToken({ id: exist._id });
       const refreshToken = generateRefreshToken({ id: exist._id });
-      console.log("seventh");
+      console.log("exist",exist);
       return {
         success: true,
         message: "signIn is succesfully complated",
@@ -99,6 +116,7 @@ export class AuthService implements IAuthService {
         refreshToken: refreshToken,
         user: {
           id: exist._id.toString(),
+          image:exist.image.url,
           name: exist.name,
           email: exist.email,
         },

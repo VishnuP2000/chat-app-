@@ -1,9 +1,11 @@
+import dotenv from "dotenv";
+import 'dotenv/config'
+dotenv.config();
 import express, { Request, Response } from "express";
 import http from "http";
 import { Server } from "socket.io";
 import "reflect-metadata";
 import cors from "cors";
-import dotenv from "dotenv";
 
 import userRouter from "./routes/userRouter";
 import { connectDB } from "./config/db";
@@ -14,7 +16,6 @@ import "./models/chat.modal";
 import "./models/message.modal";
 import "./models/user.model";
 
-dotenv.config();
 
 const app = express();
 
@@ -45,7 +46,9 @@ app.use((req: Request, res: Response) => {
 });
 // SOCKET.IO
 import { initSocketServer } from "./socket/socketServer";
+console.log('initSocketServer server.js start')
 initSocketServer(httpServer);
+console.log('initSocketServer server.js end')
 
 
 httpServer.listen(process.env.PORT, () => {

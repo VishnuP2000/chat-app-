@@ -44,6 +44,9 @@ function SignUpPage(): JSX.Element {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [image, setImage] = useState<File | null>(null);
+
+  
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const id = e.target.id as keyof SignUpFormData;
@@ -62,22 +65,28 @@ function SignUpPage(): JSX.Element {
     return newErrors;
   };
 
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
+    const formData=new FormData()
     const validationErrors = validate();
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
-      const payload = {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        confirmPassword:form.confirmPassword
-      };
-      const response = await signUpRequest(payload);
+      // const payload = {
+      //   name: form.name,
+      //   email: form.email,
+      //   password: form.password,
+      //   confirmPassword:form.confirmPassword
+      // };
+      formData.append('name',form.name)
+      formData.append('email',form.email)
+      formData.append('password',form.password)
+      formData.append('confirmPassword',form.confirmPassword)
+      if(image){
+        formData.append('image',image)
+      }
+      const response = await signUpRequest(formData);
       console.log(response)
       // localStorage.setItem("access-token", response.data.accessToken);
       if (response.data.data.success) navigate("/sign-in");
@@ -177,6 +186,19 @@ function SignUpPage(): JSX.Element {
                 custom={3}
                 className="space-y-4"
               >
+                <LabelInputContainer>
+                  <input 
+                  className="cursor-pointer"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e)=>{
+                    if(e.target.files?.length){
+                      setImage(e.target.files[0])
+                    }
+                  }
+                  }
+                   />
+                </LabelInputContainer>
                 <LabelInputContainer>
                   <Input
                     id="name"
@@ -283,8 +305,8 @@ function SignUpPage(): JSX.Element {
                 className="relative mt-2 inline-flex h-11 w-full items-center justify-center overflow-hidden rounded-full bg-indigo-500 px-6 text-sm font-semibold text-white shadow-xl transition"
                 type="submit"
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 opacity-80" />
-                <span className="relative">Create Account</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 opacity-80 cursor-pointer" />
+                <span className="relative cursor-pointer">Create Account</span>
               </motion.button>
             </form>
 

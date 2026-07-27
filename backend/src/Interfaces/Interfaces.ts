@@ -16,6 +16,7 @@ export interface SignInResult extends AuthResponse {
   userId?: string;
   pic?: string;
   user:{
+    image:string
     id:string,
     name:string,
     email:string
