@@ -5,9 +5,10 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 function ShowUsers() {
-    const [users,setUsers]=useState<IUser[]>([])
+    // const [users,setUsers]=useState<IUser[]>([])
 console.log('enter the showUser')
 const {user}=useAuth()
+
 
 
   return (
@@ -25,6 +26,7 @@ const {user}=useAuth()
           </div>
           <p><strong>job:</strong>software developer</p>
           <p><strong>Name:</strong> {user?.name}</p>
+          
         </div>
     
     </div>

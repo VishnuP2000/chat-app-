@@ -86,23 +86,30 @@ export class AuthControllers {
   async refreshToken(req: Request, res: Response) {
     try {
       const token = req.cookies.refreshToken;
-      console.log("token", token);
+      console.log("Refresh cookie:", req.cookies);
+console.log("Refresh token:", req.cookies.refreshToken);
+      console.log("controller refreshtoken", token);
       if (!token) {
         throw new AppError("Refresh token missing", 401);
       }
 
       const decoded = jwt.verify(token, process.env.REFRESH_TOKEN!) as any;
-
+      console.log('decoded',decoded)
       const newAccessToken = jwt.sign(
-        { id: decoded.id },
+        { id: decoded.user.id },
         process.env.ACCESS_TOKEN!,
         { expiresIn: "15m" },
       );
 
       return res.status(200).json({ accessToken: newAccessToken });
-    } catch (error) {
-      return res.status(401).json({ message: "Invalid refresh token" });
-    }
+    }catch (error) {
+  console.error("Refresh token error:", error);
+
+  return res.status(401).json({
+    message: "Invalid refresh token",
+    error,
+  });
+}
   }
  
 }

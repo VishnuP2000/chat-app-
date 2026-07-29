@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import ShowUsers from "./pages/ShowUsers";
 import Profile from "./pages/Profile"
+import ProtectedRoute from "./components/protectedRoute/protectedRoute";
 
 
 function App() {
@@ -13,10 +14,10 @@ function App() {
     <div className="">
       <Routes>
         <Route path={"/"} element={<Home />} />
-        <Route path={"/Profile"} element={<Profile />} />
-        <Route path={"/showUsers"} element={<ShowUsers />} />
+        <Route path={"/Profile"} element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path={"/showUsers"} element={<ProtectedRoute><ShowUsers /></ProtectedRoute>} />
+        <Route path={"/Dashboard"} element={<ProtectedRoute><Dashboard/></ProtectedRoute>} />
         <Route path={"/sign-in"} element={<SignIn />} />
-        <Route path={"/Dashboard"} element={<Dashboard/>} />
         <Route path={"/sign-up"} element={<SignUp />} />
         <Route path={"/dashboard"} element={<Dashboard />} />
       </Routes>

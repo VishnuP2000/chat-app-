@@ -41,21 +41,6 @@ export class AuthService implements IAuthService {
       let Image;
       console.log("service layer", name, email, password, confirmPassword);
       console.log("file", file);
-//      try {
-//   if (file?.path) {
-//     Image = await uploadToCloudinary(file.path);
-//     fs.unlinkSync(file.path);
-//   }
-// } catch (error) {
-//   if (file?.path && fs.existsSync(file.path)) {
-//     fs.unlinkSync(file.path);
-//   }
-
-//   throw new AppError(
-//     "Image upload failed",
-//     HttpStatus.INTERNAL_SERVER_ERROR
-//   );
-// }
 
  if (file?.path) {
     Image = await uploadToCloudinary(file.path);

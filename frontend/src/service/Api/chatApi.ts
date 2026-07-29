@@ -22,7 +22,7 @@ const handleError = (error: any): never => {
 
 export const usersFetch = async (): Promise<IUser[]> => {
   try {
-    console.log("usersFetch");
+    console.log("frontend service");
     const res = await privateAxios.get<ChatResponse<IUser[]>>(
       "/chat/users"
     );

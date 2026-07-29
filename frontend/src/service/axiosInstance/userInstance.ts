@@ -19,10 +19,10 @@ export const privateAxios = axios.create({
 
 // ---------------- Request Interceptor ----------------
 privateAxios.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access-token");
- 
-  console.log('privetAxios instance',token)
+  const token = localStorage.getItem("accessToken");
+  console.log('UserInstance accestoken',token)
   if (token) {
+    console.log('usersInstance token',token)
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -41,11 +41,9 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 };
 
 // ---------------- Response Interceptor ----------------
-privateAxios.interceptors.response.use(
-  (response) => response,
-
-  async (error) => {
+privateAxios.interceptors.response.use((response) => response,async (error) => {
     const originalRequest = error.config;
+    console.log('originalRequest',originalRequest)
 
     // Prevent infinite loop
     if (originalRequest.url.includes("refresh-token")) {
@@ -54,6 +52,7 @@ privateAxios.interceptors.response.use(
 
     // Access token expired → get new one using refresh token cookie
     if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log('error.response?.status')
       if (isRefreshing) {
         return new Promise((resolve) => {
           addRefreshSubscriber((token: string) => {
@@ -67,10 +66,11 @@ privateAxios.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        console.log('enter newAccessToken')
         const newAccessToken = await refreshAccessToken();
 
         // Save new access token
-        localStorage.setItem("access-token", newAccessToken);
+        localStorage.setItem("accessToken", newAccessToken);
 
         isRefreshing = false;
         onRefreshed(newAccessToken);
@@ -82,7 +82,7 @@ privateAxios.interceptors.response.use(
       } catch (err) {
         isRefreshing = false;
         refreshSubscribers = [];
-        localStorage.removeItem("access-token");
+        localStorage.removeItem("accessToken");
         return Promise.reject(err);
       }
     }
@@ -94,6 +94,7 @@ privateAxios.interceptors.response.use(
 
 // ---------------- Refresh Token Function ----------------
 const refreshAccessToken = async () => {
+  console.log('enter refreshToken')
   const res = await publicAxios.post(
     "/user/refresh-token",
     {},

@@ -10,26 +10,35 @@ interface TokenPayload {
 }
 
 // This middleware protects a route by verifying the access token
-export const verifyAccessToken = ( req: AuthRequset, res: Response,next: NextFunction) => {
+export const verifyAccessToken = (
+  req: AuthRequset,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const authHeader = req.headers.authorization;
-    console.log('authMiddleware',authHeader)
+    console.log("authMiddleware", authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log('Access token missing')
       throw new AppError("Access token missing", 401);
     }
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token,process.env.ACCESS_TOKEN!) as TokenPayload;
+    if (!token) {
+      return res.status(401);
+    }
+
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!,) as TokenPayload;
 
     const userId = decoded.user.id;
     req.user = { id: userId };
     // req.user = { id: decoded.user.id };
-console.log('complate the middlware')
-next();
-} catch (error) {
-    console.log('get the middleware error,,,,,,,,,',error)
+    console.log("complate the middlware");
+    next();
+  } catch (error) {
+    console.log("get the middleware error,,,,,,,,,", error);
     return res.status(401).json({
       success: false,
       message: "Invalid or expired access token",
