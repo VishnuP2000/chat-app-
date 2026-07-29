@@ -14,9 +14,9 @@ import jwt from "jsonwebtoken";
 @Service()
 export class AuthControllers {
   constructor(
-     @Inject(()=>AuthService)
-    private readonly authService:IAuthService
-  ){}
+    @Inject(() => AuthService)
+    private readonly authService: IAuthService,
+  ) {}
   async signUp(req: Request, res: Response): Promise<Response> {
     try {
       console.log("requu", req.body);
@@ -31,7 +31,7 @@ export class AuthControllers {
         });
       }
       console.log("after complate validations");
-      const response = await this.authService.signUp(req.body,req.file);
+      const response = await this.authService.signUp(req.body, req.file);
       console.log("res", response);
 
       return res.status(201).json({ data: response }); // <- IMPORTANT
@@ -63,7 +63,7 @@ export class AuthControllers {
 
       const response = await this.authService.signIn({ email, password });
 
-      console.log("response auth.controller",response);
+      console.log("response auth.controller", response);
       setCookies(res, "refreshToken", String(response.refreshToken));
 
       console.log("suceeeeeeeeee");
@@ -72,14 +72,18 @@ export class AuthControllers {
         success: true,
         message: "Sign in successfully completed",
         accessToken: response.accessToken,
-        user:response.user
+        user: response.user,
       });
     } catch (error) {
       if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ message: error.message, success: false });
+        return res
+          .status(error.statusCode)
+          .json({ message: error.message, success: false });
       }
       console.log("signin error", error);
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal server error" });
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -87,31 +91,34 @@ export class AuthControllers {
     try {
       const token = req.cookies.refreshToken;
       console.log("Refresh cookie:", req.cookies);
-console.log("Refresh token:", req.cookies.refreshToken);
+      console.log("Refresh token:", req.cookies.refreshToken);
       console.log("controller refreshtoken", token);
       if (!token) {
         throw new AppError("Refresh token missing", 401);
       }
 
       const decoded = jwt.verify(token, process.env.REFRESH_TOKEN!) as any;
-      console.log('decoded',decoded)
+      console.log("decoded", decoded);
       const newAccessToken = jwt.sign(
-        { id: decoded.user.id },
+        {
+          user: {
+            id: decoded.user.id,
+          },
+        },
         process.env.ACCESS_TOKEN!,
         { expiresIn: "15m" },
       );
 
       return res.status(200).json({ accessToken: newAccessToken });
-    }catch (error) {
-  console.error("Refresh token error:", error);
+    } catch (error) {
+      console.error("Refresh token error:", error);
 
-  return res.status(401).json({
-    message: "Invalid refresh token",
-    error,
-  });
-}
+      return res.status(401).json({
+        message: "Invalid refresh token",
+        error,
+      });
+    }
   }
- 
 }
 
 export const authControllers = Container.get(AuthControllers);

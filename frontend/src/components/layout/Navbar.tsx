@@ -12,7 +12,7 @@ console.log("user+",user);
   const navigat=useNavigate()
 
   const logout = () => {
-    localStorage.removeItem('access-token')
+    localStorage.removeItem('accessToken')
       setUser(null);
   navigat("/");
   }

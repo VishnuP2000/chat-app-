@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import 'dotenv/config'
 dotenv.config();
 import express, { Request, Response } from "express";
+import cookieParser from "cookie-parser";
 import http from "http";
 import { Server } from "socket.io";
 import "reflect-metadata";
@@ -29,7 +30,7 @@ app.use(
     credentials: true,
   })
 );
-
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
