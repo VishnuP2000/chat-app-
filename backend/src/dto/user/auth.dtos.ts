@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { IUser } from "../../models/user.model";
 
 export interface SignUpDto {
   name: string;
@@ -22,4 +23,7 @@ export interface GetChatDto {
   userMail: string;
   currentUserId: string | undefined;
 }
-
+export interface GetUsersResult {
+  users: IUser[];
+  totalUsers: number;
+}

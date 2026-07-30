@@ -2,6 +2,7 @@ import Container, { Service } from "typedi";
 import { userModel, IUser } from "../../models/user.model";
 import { BaseRepository } from "../base.repository";
 import { IUserRepository } from "../interface/user/user.IRepository";
+import { GetUsersResult } from "../../dto/user/auth.dtos";
 @Service()
 export class UserRepository extends BaseRepository<IUser>implements IUserRepository{
   constructor() {
@@ -18,9 +19,17 @@ export class UserRepository extends BaseRepository<IUser>implements IUserReposit
       return Promise.reject(new Error(`Error finding user by email: ${error}`));
     }
   }
-  async findAllUsers(): Promise<IUser[]> {
+  async findAllUsers(page:number,limit:number):Promise<GetUsersResult> {
     console.log('findallusers')
-  return await userModel.find().select("-password");
+     const skip = (page - 1) * limit;
+       const users = await userModel.find().select("-password").skip(skip).limit(limit);
+     const totalUsers = await userModel.countDocuments();
+
+  // return await userModel.find().select("-password");
+  return {
+    users,
+    totalUsers
+  }
 }
 
 async AllUsersfind(email: string): Promise<IUser[]> {

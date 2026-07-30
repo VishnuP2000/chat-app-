@@ -2,6 +2,7 @@ import Container, { Inject, Service } from "typedi";
 import {
   getAllDto,
   GetChatDto,
+  GetUsersResult,
   SignInDto,
   SignUpDto,
 } from "../../../dto/user/auth.dtos";
@@ -35,9 +36,9 @@ export class ChatService implements IChatService {
     private readonly chatRepo:IChatRepository<IChat>
   ){}
 
-  async getAllUsers(): Promise<IUser[]>  {
+  async getAllUsers(page:number,limit:number): Promise<GetUsersResult>  {
     console.log("getAllUsers");
-     return await this.userRepo.findAllUsers();
+     return await this.userRepo.findAllUsers(page,limit);
   }
 
   async createOrGetChat(dto: GetChatDto): Promise<giveChatResult> {

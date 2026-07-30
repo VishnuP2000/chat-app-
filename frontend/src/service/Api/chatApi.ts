@@ -11,6 +11,12 @@ interface ChatResponse<T> {
   unreadCount?: number;
   messagesMarkedAsSeen?: boolean;
   users?: IUser[];
+  totalPages:number;
+
+}
+interface UsersFetchResponse {
+  users: IUser[];
+  totalPages: number;
 }
 
 const handleError = (error: any): never => {
@@ -20,19 +26,23 @@ const handleError = (error: any): never => {
 };
 
 
-export const usersFetch = async (): Promise<IUser[]> => {
+export const usersFetch = async (page:number,limit:number=10): Promise<UsersFetchResponse> => {
   try {
     console.log("frontend service");
     const res = await privateAxios.get<ChatResponse<IUser[]>>(
-      "/chat/users"
+      `/chat/users?page=${page}&limit=${limit}`
     );
     console.log("resApi", res);
+    console.log("res.data.totalPages", res.data.totalPages);
     const users = res.data.data ?? res.data.users;
     if (!users) {
       throw new Error("No users received");
     }
     console.log("res.users", users);
-    return users;
+    return {
+          users:users,
+    totalPages: res.data.totalPages,
+    }
   } catch (error) {
     return handleError(error);
   }

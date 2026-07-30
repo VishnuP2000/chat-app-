@@ -11,18 +11,25 @@ import { AuthRequset } from "../../Interfaces/Interfaces";
 @Service()
 export class ChatControllers {
   constructor(
-    @Inject(()=>ChatService)
-    private readonly chatservice:IChatService
-  ){}
+    @Inject(() => ChatService)
+    private readonly chatservice: IChatService,
+  ) {}
 
   async getUsers(req: Request, res: Response) {
     try {
       console.log("hello");
-      const users = await this.chatservice.getAllUsers();
-      console.log("get users",users);
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
+      console.log("page", page);
+      console.log("limit", limit);
+      const result = await this.chatservice.getAllUsers(page, limit);
+      console.log("result.totalUsers", result.totalUsers);
+      console.log("Math.ceil(result.totalUsers / limit)", Math.ceil(result.totalUsers / limit));
       return res.status(200).json({
         success: true,
-        users,
+        users: result.users,
+        totalUsers: result.totalUsers,
+        totalPages: Math.ceil(result.totalUsers / limit),
       });
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -35,10 +42,10 @@ export class ChatControllers {
 
   async chatUsers(req: AuthRequset, res: Response) {
     try {
-      console.log('chatUsers')
+      console.log("chatUsers");
       const { userMail } = req.body;
       console.log("userMail", userMail);
-      const currentUserId= req.user?.id  //
+      const currentUserId = req.user?.id; //
       console.log("currentUserId", currentUserId);
 
       if (!userMail) {
@@ -61,7 +68,6 @@ export class ChatControllers {
 
       // console.log("decoded.user", decoded.user);
       // const currentUserId = decoded.user.id;
-
 
       const chat = await this.chatservice.createOrGetChat({
         userMail,
@@ -90,20 +96,20 @@ export class ChatControllers {
 
   async getChatUsers(req: AuthRequset, res: Response) {
     try {
-      console.log('getMessage')
+      console.log("getMessage");
       const { chatId } = req.params;
-      console.log('controller chatId',chatId)
+      console.log("controller chatId", chatId);
 
       const chatData = await this.chatservice.dataFetch(chatId);
 
-      console.log('chatData',chatData.data)
+      console.log("chatData", chatData.data);
 
       return res.status(200).json({
         success: true,
-        message:'Messages fetched successfully',
+        message: "Messages fetched successfully",
         data: chatData.data,
       });
-    } catch (error) { 
+    } catch (error) {
       console.log(error);
       return res
         .status(500)
@@ -113,7 +119,7 @@ export class ChatControllers {
 
   async getAllChats(req: AuthRequset, res: Response) {
     try {
-      console.log('getAllChats')
+      console.log("getAllChats");
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({
@@ -123,7 +129,7 @@ export class ChatControllers {
       }
 
       const chatsResult = await this.chatservice.getAllChatsByUserId(userId);
-      console.log('chatsResult',chatsResult)
+      console.log("chatsResult", chatsResult);
       return res.status(HttpStatus.OK).json({
         success: true,
         data: chatsResult,
