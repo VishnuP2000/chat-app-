@@ -36,9 +36,9 @@ export class ChatService implements IChatService {
     private readonly chatRepo:IChatRepository<IChat>
   ){}
 
-  async getAllUsers(page:number,limit:number): Promise<GetUsersResult>  {
+  async getAllUsers(page:number,limit:number,userId:string): Promise<GetUsersResult>  {
     console.log("getAllUsers");
-     return await this.userRepo.findAllUsers(page,limit);
+     return await this.userRepo.findAllUsers(page,limit,userId);
   }
 
   async createOrGetChat(dto: GetChatDto): Promise<giveChatResult> {

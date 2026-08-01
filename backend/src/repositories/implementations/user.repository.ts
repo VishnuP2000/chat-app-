@@ -19,10 +19,10 @@ export class UserRepository extends BaseRepository<IUser>implements IUserReposit
       return Promise.reject(new Error(`Error finding user by email: ${error}`));
     }
   }
-  async findAllUsers(page:number,limit:number):Promise<GetUsersResult> {
+  async findAllUsers(page:number,limit:number,userId:string):Promise<GetUsersResult> {
     console.log('findallusers')
      const skip = (page - 1) * limit;
-       const users = await userModel.find().select("-password").skip(skip).limit(limit);
+       const users = await userModel.find({_id:{$ne:userId}}).select("-password").skip(skip).limit(limit);
      const totalUsers = await userModel.countDocuments();
 
   // return await userModel.find().select("-password");

@@ -4,7 +4,7 @@ import { IUser } from "@/types/chat";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-function ShowUsers() {
+function Profile() {
     // const [users,setUsers]=useState<IUser[]>([])
 console.log('enter the showUser')
 const {user}=useAuth()
@@ -33,4 +33,4 @@ const {user}=useAuth()
   );
 }
 
-export default ShowUsers;
+export default Profile;

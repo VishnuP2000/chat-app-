@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 import { AppError } from "../utils/customError";
 import { AuthRequset } from "../Interfaces/Interfaces";
 
-interface TokenPayload {
-  user: {
+export interface AuthRequest extends Request {
+  user?: {
     id: string;
   };
 }
@@ -30,7 +30,7 @@ export const verifyAccessToken = (
       return res.status(401);
     }
 
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!,) as TokenPayload;
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!,) as jwt.JwtPayload;
 
     const userId = decoded.user.id;
     req.user = { id: userId };

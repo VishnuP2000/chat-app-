@@ -1,6 +1,6 @@
 // backend/src/controllers/implementations/chat.controllers.ts
 import Container, { Inject, Service } from "typedi";
-import { Request, Response } from "express";
+import { raw, Request, Response } from "express";
 import { ChatService } from "../../services/implementations/chat/chat.service";
 import { IChatService } from "../../services/interface/chat/chat.IService";
 import jwt from "jsonwebtoken";
@@ -15,14 +15,22 @@ export class ChatControllers {
     private readonly chatservice: IChatService,
   ) {}
 
-  async getUsers(req: Request, res: Response) {
+  async getUsers(req: AuthRequset, res: Response) {
     try {
       console.log("hello");
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
+      const userId=req.user?.id
+      console.log("userId", userId);
+          if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
       console.log("page", page);
       console.log("limit", limit);
-      const result = await this.chatservice.getAllUsers(page, limit);
+      const result = await this.chatservice.getAllUsers(page, limit ,userId);
       console.log("result.totalUsers", result.totalUsers);
       console.log("Math.ceil(result.totalUsers / limit)", Math.ceil(result.totalUsers / limit));
       return res.status(200).json({

@@ -1,5 +1,6 @@
 import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
+import { useAuth } from "@/context/AuthContext";
 import { usersFetch } from "@/service/Api/chatApi";
 import { IUser } from "@/types/chat";
 import React, { useEffect, useState } from "react";
@@ -9,6 +10,7 @@ function ShowUsers() {
   const [users, setUsers] = useState<IUser[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const {user}=useAuth()
   console.log("users in showUsers", users);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ function ShowUsers() {
 </div>
 
 <div className="flex justify-center gap-4 mt-6">
-  <button
+  <button className="cursor-pointer"
     disabled={page === 1}
     onClick={() => setPage((prev) => prev - 1)}
   >
@@ -61,7 +63,7 @@ function ShowUsers() {
     {page} / {totalPages}
   </span>
 
-  <button
+  <button className="cursor-pointer"
     disabled={page === totalPages}
     onClick={() => setPage((prev) => prev + 1)}
   >
