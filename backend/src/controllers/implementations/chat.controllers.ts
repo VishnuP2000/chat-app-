@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { AppError } from "../../utils/customError";
 import { HttpStatus } from "../../enum/httpStatus";
 import { AuthRequset } from "../../Interfaces/Interfaces";
+import { AuthRequest } from "../../middleware/auth.middleware";
 
 @Service()
 export class ChatControllers {
@@ -62,20 +63,6 @@ export class ChatControllers {
           .json({ message: "userMail is required", success: false });
       }
 
-      // Extract current user ID from JWT token
-      // const token = req.headers.authorization?.replace("Bearer ", "");
-      // if (!token) {
-      //   return res
-      //     .status(401)
-      //     .json({ message: "Unauthorized", success: false });
-      // }
-
-      // const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!) as {
-      //   user: { id: string };
-      // };
-
-      // console.log("decoded.user", decoded.user);
-      // const currentUserId = decoded.user.id;
 
       const chat = await this.chatservice.createOrGetChat({
         userMail,
@@ -150,6 +137,64 @@ export class ChatControllers {
       });
     }
   }
+  async sendRequest(req: AuthRequest, res: Response) {
+    const senderId = req.user?.id
+    const { receiverId } = req.body;
+    console.log('senderId',senderId)
+    console.log('receiverId',receiverId)
+      if (!senderId) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+
+  if (!receiverId) {
+    return res.status(400).json({
+      success: false,
+      message: "Receiver ID is required",
+    });
+  }
+    const request = await this.chatservice.sendRequest(
+        senderId,
+        receiverId
+    );
+    console.log('request',request)
+
+    return res.json({
+        success: true,
+        data: request,
+    });
+}
+// async getPendingRequests(req: AuthRequest, res: Response) {
+//     const userId = req.user!.id;
+
+//     const requests =
+//         await this.chatRequestService.getPendingRequests(userId);
+
+//     return res.json({
+//         success: true,
+//         data: requests,
+//     });
+// }
+// async acceptRequest(req: AuthRequest, res: Response) {
+//     const { requestId } = req.params;
+
+//     await this.chatRequestService.acceptRequest(requestId);
+
+//     return res.json({
+//         success: true,
+//     });
+// }
+// async rejectRequest(req: AuthRequest, res: Response) {
+//     const { requestId } = req.params;
+
+//     await this.chatRequestService.rejectRequest(requestId);
+
+//     return res.json({
+//         success: true,
+//     });
+// }  
 }
 
 export const chatControllers = Container.get(ChatControllers);

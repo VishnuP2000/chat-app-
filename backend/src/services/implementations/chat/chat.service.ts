@@ -27,13 +27,18 @@ import { ChatRepository, chatRepository } from "../../../repositories/implementa
 import { IChatRepository } from "../../../repositories/interface/chat.Irepository";
 import { Types } from "mongoose";
 import { IChatService } from "../../interface/chat/chat.IService";
+import { chatRequestRepository } from "../../../repositories/implementations/chatRequestReposiotory";
+import { IChatRequestRepository } from "../../../repositories/interface/ChatRequest.IRepository";
+import { IChatRequest } from "../../../models/chatRequest.modal";
 @Service()
 export class ChatService implements IChatService {
   constructor(
     @Inject(()=>UserRepository)
     private readonly userRepo:IUserRepository,
     @Inject(()=>ChatRepository)
-    private readonly chatRepo:IChatRepository<IChat>
+    private readonly chatRepo:IChatRepository<IChat>,
+    @Inject(()=>chatRequestRepository)
+    private readonly chatRequestRepo:IChatRequestRepository<IChatRequest>
   ){}
 
   async getAllUsers(page:number,limit:number,userId:string): Promise<GetUsersResult>  {
@@ -104,6 +109,51 @@ export class ChatService implements IChatService {
     }
     return await this.chatRepo.findAllByUserId(userObjectId);
   }
+  
+   async sendRequest(senderId: string, receiverId: string): Promise<IChatRequest> {
+    console.log('sendRequest in AuthService sender',senderId)
+    console.log('sendRequest in AuthService receiverId',receiverId)
+    const existing = await this.chatRequestRepo.findRequest(
+      senderId,
+      receiverId
+    );
+
+    if (existing) {
+      throw new Error("Request already exists.");
+    }
+
+    return await this.chatRequestRepo.sendRequest(
+      senderId,
+      receiverId
+    );
+  }
+
+  // async getPendingRequests(userId: string) {
+  //   return await this.chatRepo.getPendingRequests(userId);
+  // }
+
+  // async acceptRequest(requestId: string) {
+  //   const request = await this.chatRepo.updateStatus(
+  //     requestId,
+  //     "accepted"
+  //   );
+
+  //   if (!request) {
+  //     throw new Error("Request not found.");
+  //   }
+
+  //   await this.chatRepository.createChat([
+  //     request.sender,
+  //     request.receiver,
+  //   ]);
+  // }
+
+  // async rejectRequest(requestId: string) {
+  //   await this.chatRepo.updateStatus(
+  //     requestId,
+  //     "rejected"
+  //   );
+  // }
 }
 
 export const chatService = Container.get(ChatService);

@@ -47,6 +47,18 @@ export const usersFetch = async (page:number,limit:number=10): Promise<UsersFetc
     return handleError(error);
   }
 };
+export const requestFetch=async(userId:string)=>{
+  try {
+    console.log('enter the requestFetch')
+    const response=await privateAxios.post("/chat/request",{receiverId:userId})
+    console.log('response',response)
+    console.log('response',response.data)
+    return response.data;
+  } catch (error) {
+    console.log('error',error)
+     return handleError(error);
+  }
+}
 
 export const usersChatAdd = async (userMail: string): Promise<IChat> => { // IchatRoom changed
   try {

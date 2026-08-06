@@ -43,6 +43,7 @@ export abstract class BaseRepository<T extends Document> implements IRepository<
   async create(data: Partial<T>): Promise<T> {
     try {
       
+      console.log('enter the create model',data)
       let d =  await this.model.create(data);
       console.log(d)
       return d

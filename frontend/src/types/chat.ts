@@ -16,6 +16,12 @@ export interface IUser {
   name: string;
   email: string;
 }
+export interface IRequest {
+  _id: string;
+  sender: string;
+  receiver: string;
+  status: "pending" | "accepted" | "rejected";
+}
 
 // export interface IChat {
 //   _id: string;

@@ -1,14 +1,16 @@
 import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
-import { usersFetch } from "@/service/Api/chatApi";
-import { IUser } from "@/types/chat";
+import { requestFetch, usersFetch } from "@/service/Api/chatApi";
+import { IRequest, IUser } from "@/types/chat";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 function ShowUsers() {
   const [users, setUsers] = useState<IUser[]>([]);
   const [page, setPage] = useState(1);
+  const [requests, setRequests] = useState<IRequest[]>([]);
+  console.log('request state',requests)
   const [totalPages, setTotalPages] = useState(1);
   const {user}=useAuth()
   console.log("users in showUsers", users);
@@ -31,24 +33,53 @@ function ShowUsers() {
       // setLoadingUsers(false);
     }
   };
+  const sendRequest = async (userId:string) => {
+    try {
+      console.log('enter sendRequest',userId)
+      const response=await requestFetch(userId)
+      console.log('response++',response)
+      setRequests((prev) => [...prev, response.data]);
+      toast.success("Request sent");
+    } catch (error) {
+      console.log('error',error)
+    }
+  }
+
+  
 
   return (
     <div>
       <Navbar />
  <div className="flex gap-4 p-4">
-  {users.map((data) => (
+{users.map((data) => {
+  const hasPendingRequest = requests.some(
+    (req) =>
+      req.receiver === data._id &&
+      req.status === "pending"
+  );
+
+  return (
     <div
       key={data._id}
       className="bg-amber-500 w-[300px] h-[400px] p-4 rounded-lg"
     >
       <img src={data.image.url} alt={data.name} />
+
       <p>
         <strong>Name:</strong> {data.name}
       </p>
 
-      <Button title="Request" className="" />
+      {hasPendingRequest ? (
+        <Button title="Pending"  />
+      ) : (
+        <Button
+          title="Request"
+          onClick={() => sendRequest(data._id)}
+        />
+      )}
     </div>
-  ))}
+  );
+})}
 </div>
 
 <div className="flex justify-center gap-4 mt-6">
