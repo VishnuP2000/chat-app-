@@ -12,7 +12,7 @@ chatRouter.post("/create", verifyAccessToken, chatControllers.chatUsers.bind(cha
 chatRouter.get("/chatData/:chatId", verifyAccessToken, chatControllers.getChatUsers.bind(chatControllers));
 chatRouter.get("/all", verifyAccessToken, chatControllers.getAllChats.bind(chatControllers));
 chatRouter.post("/request", verifyAccessToken, chatControllers.sendRequest.bind(chatControllers));
-// chatRouter.get("/request", verifyAccessToken, chatControllers.getPendingRequests.bind(chatControllers));
+chatRouter.get("/request", verifyAccessToken, chatControllers.getPendingRequests.bind(chatControllers));
 // chatRouter.patch("/request/:requestId/accept", verifyAccessToken, chatControllers.acceptRequest.bind(chatControllers));
 // chatRouter.patch("/request/:requestId/reject", verifyAccessToken, chatControllers.rejectRequest.bind(chatControllers));
 

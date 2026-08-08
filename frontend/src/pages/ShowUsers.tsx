@@ -1,7 +1,7 @@
 import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
-import { requestFetch, usersFetch } from "@/service/Api/chatApi";
+import { getSentRequests, requestFetch, usersFetch } from "@/service/Api/chatApi";
 import { IRequest, IUser } from "@/types/chat";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -10,13 +10,16 @@ function ShowUsers() {
   const [users, setUsers] = useState<IUser[]>([]);
   const [page, setPage] = useState(1);
   const [requests, setRequests] = useState<IRequest[]>([]);
-  console.log('request state',requests)
+  console.log('requests',requests)
+  const [receivedRequests, setReceivedRequests] = useState<IRequest[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const {user}=useAuth()
-  console.log("users in showUsers", users);
+  console.log("users:", users);
+console.log("requests:", requests);
 
   useEffect(() => {
     fetchUsers();
+    fetchSentRequests();
   }, [page]);
 
   const fetchUsers = async () => {
@@ -37,13 +40,31 @@ function ShowUsers() {
     try {
       console.log('enter sendRequest',userId)
       const response=await requestFetch(userId)
-      console.log('response++',response)
-      setRequests((prev) => [...prev, response.data]);
+      console.log('response++',response.data)
+      setRequests((prev)=> [...prev, response.data])
       toast.success("Request sent");
     } catch (error) {
       console.log('error',error)
     }
   }
+const fetchSentRequests = async () => {
+  try {
+    const response = await getSentRequests();
+    console.log('response---',response.data)
+    setRequests(response.data ?? []);
+  } catch (error) {
+    console.error("error",error);
+  }
+};
+// const fetchReceivedRequests = async () => {
+//   try {
+//     const response = await getReceivedRequests();
+
+//     setReceivedRequests(response.data ?? []);
+//   } catch (error) {
+//     console.error("Error fetching received requests:", error);
+//   }
+// };
 
   
 
@@ -54,9 +75,10 @@ function ShowUsers() {
 {users.map((data) => {
   const hasPendingRequest = requests.some(
     (req) =>
-      req.receiver === data._id &&
-      req.status === "pending"
-  );
+     ( req.receiver === data._id &&
+      req.status === "pending")
+    );
+    console.log('data._Id',data._id,data.name)
 
   return (
     <div

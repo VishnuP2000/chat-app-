@@ -163,20 +163,25 @@ export class ChatControllers {
 
     return res.json({
         success: true,
-        data: request,
+        data:request,
     });
 }
-// async getPendingRequests(req: AuthRequest, res: Response) {
-//     const userId = req.user!.id;
+async getPendingRequests(req: AuthRequest, res: Response) {
+    const userId = req.user?.id;
+      if (!userId) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+    const requests =await this.chatservice.getFindSentRequests(userId);
+    console.log('requests controller',requests)
 
-//     const requests =
-//         await this.chatRequestService.getPendingRequests(userId);
-
-//     return res.json({
-//         success: true,
-//         data: requests,
-//     });
-// }
+    return res.json({
+        success: true,
+        data: requests,
+    });
+}
 // async acceptRequest(req: AuthRequest, res: Response) {
 //     const { requestId } = req.params;
 

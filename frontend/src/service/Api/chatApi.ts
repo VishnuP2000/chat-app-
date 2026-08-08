@@ -59,6 +59,17 @@ export const requestFetch=async(userId:string)=>{
      return handleError(error);
   }
 }
+export const getSentRequests=async()=>{
+  try {
+    console.log('enter the getSentRequests')
+    const response=await privateAxios.get("/chat/request")
+    console.log('enter the response',response)
+    return response.data
+  } catch (error) {
+        console.log('error',error)
+     return handleError(error);
+  }
+}
 
 export const usersChatAdd = async (userMail: string): Promise<IChat> => { // IchatRoom changed
   try {

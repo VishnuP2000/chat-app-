@@ -47,5 +47,10 @@ export class chatRequestRepository extends BaseRepository<IChatRequest> implemen
         throw new Error("Unknown error occurred in updateAndPopulate");
       }
     }
+    async FindSentRequests(senderId: string): Promise<IChatRequest[]> {
+    return await ChatRequestModel.find({
+        sender: senderId
+    });
+}
 
 }

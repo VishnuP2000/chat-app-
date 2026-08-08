@@ -9,4 +9,5 @@ export interface IChatService {
   dataFetch(userId: string): Promise<giveChatResult>;
   getAllChatsByUserId(userId: string): Promise<IChat[]>;
   sendRequest(senderId: string, receiverId: string): Promise<IChatRequest>;
+  getFindSentRequests(senderId: string): Promise<IChatRequest[]>;
 }
