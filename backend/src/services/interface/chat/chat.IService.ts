@@ -10,4 +10,5 @@ export interface IChatService {
   getAllChatsByUserId(userId: string): Promise<IChat[]>;
   sendRequest(senderId: string, receiverId: string): Promise<IChatRequest>;
   getFindSentRequests(senderId: string): Promise<IChatRequest[]>;
+  getFindReceivedRequests(receiverId: string): Promise<IChatRequest[]>;
 }

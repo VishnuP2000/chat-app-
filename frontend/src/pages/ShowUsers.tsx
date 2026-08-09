@@ -1,7 +1,7 @@
 import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
-import { getSentRequests, requestFetch, usersFetch } from "@/service/Api/chatApi";
+import { getReceivedRequests, getSentRequests, requestFetch, usersFetch } from "@/service/Api/chatApi";
 import { IRequest, IUser } from "@/types/chat";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -20,6 +20,7 @@ console.log("requests:", requests);
   useEffect(() => {
     fetchUsers();
     fetchSentRequests();
+    fetchReceivedRequests();
   }, [page]);
 
   const fetchUsers = async () => {
@@ -56,15 +57,15 @@ const fetchSentRequests = async () => {
     console.error("error",error);
   }
 };
-// const fetchReceivedRequests = async () => {
-//   try {
-//     const response = await getReceivedRequests();
-
-//     setReceivedRequests(response.data ?? []);
-//   } catch (error) {
-//     console.error("Error fetching received requests:", error);
-//   }
-// };
+const fetchReceivedRequests = async () => {
+  try {
+    const response = await getReceivedRequests();
+    console.log('response******',response.data)
+    setReceivedRequests(response.data ?? []);
+  } catch (error) {
+    console.error("Error fetching received requests:", error);
+  }
+};
 
   
 
@@ -79,6 +80,11 @@ const fetchSentRequests = async () => {
       req.status === "pending")
     );
     console.log('data._Id',data._id,data.name)
+      const receivedRequest = receivedRequests.find(
+    (request) =>
+      request.sender === data._id &&
+      request.status === "pending"
+  );
 
   return (
     <div
@@ -92,7 +98,15 @@ const fetchSentRequests = async () => {
       </p>
 
       {hasPendingRequest ? (
-        <Button title="Pending"  />
+        <Button
+          title="Pending"
+          // disabled
+        />
+      ) : receivedRequest ? (
+        <Button
+          title="Accept"
+          // onClick={() => acceptRequest(receivedRequest._id)}
+        />
       ) : (
         <Button
           title="Request"

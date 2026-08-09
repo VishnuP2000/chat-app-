@@ -52,5 +52,11 @@ export class chatRequestRepository extends BaseRepository<IChatRequest> implemen
         sender: senderId
     });
 }
+    async FindReceivedRequests(receiverId: string): Promise<IChatRequest[]> {
+    return await ChatRequestModel.find({
+            receiver: receiverId,
+             status: "pending",
+    });
+}
 
 }

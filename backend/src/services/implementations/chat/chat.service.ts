@@ -130,6 +130,9 @@ export class ChatService implements IChatService {
   async getFindSentRequests(senderId: string): Promise<IChatRequest[]> {
     return this.chatRequestRepo.FindSentRequests(senderId);
 }
+  async getFindReceivedRequests(receiverId: string): Promise<IChatRequest[]> {
+    return this.chatRequestRepo.FindReceivedRequests(receiverId);
+}
 
   // async getPendingRequests(userId: string) {
   //   return await this.chatRepo.getPendingRequests(userId);

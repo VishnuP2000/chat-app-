@@ -182,6 +182,26 @@ async getPendingRequests(req: AuthRequest, res: Response) {
         data: requests,
     });
 }
+async getReceivedRequests(req:AuthRequest,res:Response) {
+  try {
+    console.log('enter the getReceivedRequest')
+    const userId=req.user?.id
+      if (!userId) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+    const requests =await this.chatservice.getFindReceivedRequests(userId);
+    console.log('requestsss',requests)
+  return res.status(200).json({
+    success: true,
+    data: requests,
+  });
+  } catch (error) {
+    
+  }
+}
 // async acceptRequest(req: AuthRequest, res: Response) {
 //     const { requestId } = req.params;
 
