@@ -58,5 +58,23 @@ export class chatRequestRepository extends BaseRepository<IChatRequest> implemen
              status: "pending",
     });
 }
+async updateStatus(requestId: string,status: "accepted" | "rejected"): Promise<IChatRequest | null> {
+  try {
+    return await this.model.findByIdAndUpdate(
+      requestId,
+      { status },
+      { new: true }
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(
+        `Database Error (updateStatus): ${error.message}`
+      );
+    }
+
+    throw new Error("Unknown error occurred in updateStatus");
+  }
+}
+
 
 }

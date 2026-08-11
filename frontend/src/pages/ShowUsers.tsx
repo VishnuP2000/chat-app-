@@ -1,7 +1,7 @@
 import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
-import { getReceivedRequests, getSentRequests, requestFetch, usersFetch } from "@/service/Api/chatApi";
+import { getAcceptRequest, getReceivedRequests, getSentRequests, requestFetch, usersFetch } from "@/service/Api/chatApi";
 import { IRequest, IUser } from "@/types/chat";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -66,6 +66,19 @@ const fetchReceivedRequests = async () => {
     console.error("Error fetching received requests:", error);
   }
 };
+const fetchAcceptRequest = async (requestId:string) => {
+  try {
+    const response = await getAcceptRequest(requestId);
+    console.log('response acceptRequest',response.data)
+     toast.success("Request accepted");
+    // setReceivedRequests(response.data ?? []);
+        setReceivedRequests((prev) =>
+      prev.filter((request) => request._id !== requestId)
+    );
+  } catch (error) {
+    console.error("Error fetching received requests:", error);
+  }
+};
 
   
 
@@ -105,7 +118,7 @@ const fetchReceivedRequests = async () => {
       ) : receivedRequest ? (
         <Button
           title="Accept"
-          // onClick={() => acceptRequest(receivedRequest._id)}
+          onClick={() => fetchAcceptRequest(receivedRequest._id)}
         />
       ) : (
         <Button

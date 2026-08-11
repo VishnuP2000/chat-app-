@@ -52,11 +52,19 @@ export class ChatService implements IChatService {
     if (!selectedUser) {
       throw new AppError("User not found", HttpStatus.BAD_REQUEST);
     }
+    const currentUserId = new Types.ObjectId(dto.currentUserId);
+const selectedUserId = selectedUser._id as Types.ObjectId;
+const participantsKey = [
+  currentUserId.toString(),
+  selectedUserId.toString(),
+]
+  .sort()
+  .join("_");
     console.log("selectedUser", selectedUser);
     // Check if chat exists already
     const existingChat = await this.chatRepo.findOneByUsers([
-      new Types.ObjectId(dto.currentUserId),
-      selectedUser._id as Types.ObjectId,
+      currentUserId,
+      selectedUserId,
     ]);
     console.log("existingChat", existingChat);
     if (existingChat) {
@@ -69,13 +77,14 @@ export class ChatService implements IChatService {
 
     // Create new chat
     const newChat = await this.chatRepo.createChat({
-      users: [
-        new Types.ObjectId(dto.currentUserId),
-        selectedUser._id as Types.ObjectId,
-      ],
+        users: [
+    currentUserId,
+    selectedUserId,
+  ],
+      participantsKey,
       unreadCounts: new Map([
-        [dto.currentUserId, 0],
-        [selectedUser._id.toString(), 0],
+        [currentUserId.toString(), 0],
+        [selectedUserId.toString(), 0],
       ]),
     } as Partial<IChat>);
     console.log("newChat", newChat);
@@ -119,7 +128,10 @@ export class ChatService implements IChatService {
     );
 
     if (existing) {
-      throw new Error("Request already exists.");
+       throw new AppError(
+    "Request already exists between these users",
+    HttpStatus.BAD_REQUEST
+  );
     }
 
     return await this.chatRequestRepo.sendRequest(
@@ -138,21 +150,95 @@ export class ChatService implements IChatService {
   //   return await this.chatRepo.getPendingRequests(userId);
   // }
 
-  // async acceptRequest(requestId: string) {
-  //   const request = await this.chatRepo.updateStatus(
-  //     requestId,
-  //     "accepted"
-  //   );
+async acceptRequest(requestId: string,userId: string): Promise<IChat> {
 
-  //   if (!request) {
-  //     throw new Error("Request not found.");
-  //   }
+  console.log("acceptRequest in service");
 
-  //   await this.chatRepository.createChat([
-  //     request.sender,
-  //     request.receiver,
-  //   ]);
-  // }
+  const request = await this.chatRequestRepo.findById(requestId);
+
+  if (!request) {
+    throw new AppError(
+      "Chat request not found",
+      HttpStatus.NOT_FOUND
+    );
+  }
+
+  // Only receiver can accept
+  if (request.receiver.toString() !== userId) {
+    throw new AppError(
+      "You are not allowed to accept this request",
+      HttpStatus.FORBIDDEN
+    );
+  }
+
+  // Already accepted
+  if (request.status === "accepted") {
+    throw new AppError(
+      "Request already accepted",
+      HttpStatus.BAD_REQUEST
+    );
+  }
+
+  const senderId = new Types.ObjectId(
+    request.sender.toString()
+  );
+
+  const receiverId = new Types.ObjectId(
+    request.receiver.toString()
+  );
+
+  // Find existing chat
+  const existingChat = await this.chatRepo.findOneByUsers([
+    senderId,
+    receiverId,
+  ]);
+
+  console.log("existingChat", existingChat);
+
+  // If chat already exists, just accept request
+  if (existingChat) {
+
+    await this.chatRequestRepo.updateStatus(
+      requestId,
+      "accepted"
+    );
+
+    return existingChat;
+  }
+
+  // Create consistent key
+  const participantsKey = [
+    senderId.toString(),
+    receiverId.toString(),
+  ]
+    .sort()
+    .join("_");
+
+  // Accept request
+  await this.chatRequestRepo.updateStatus(
+    requestId,
+    "accepted"
+  );
+
+  // Create chat
+  const chat = await this.chatRepo.createChat({
+    users: [
+      senderId,
+      receiverId,
+    ],
+
+    participantsKey,
+
+    unreadCounts: new Map([
+      [senderId.toString(), 0],
+      [receiverId.toString(), 0],
+    ]),
+  });
+
+  console.log("chat", chat);
+
+  return chat;
+}
 
   // async rejectRequest(requestId: string) {
   //   await this.chatRepo.updateStatus(

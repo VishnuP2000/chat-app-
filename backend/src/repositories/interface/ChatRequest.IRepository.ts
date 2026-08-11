@@ -7,4 +7,6 @@ export interface IChatRequestRepository<T> extends IRepository<T>{
   findRequest(senderId: string, receiverId: string): Promise<IChatRequest| null>;
  FindSentRequests(senderId: string): Promise<IChatRequest[]>;
  FindReceivedRequests(receiverId: string): Promise<IChatRequest[]>;
+ updateStatus(requestId: string,status: "accepted" | "rejected"): Promise<IChatRequest | null>
+
 }

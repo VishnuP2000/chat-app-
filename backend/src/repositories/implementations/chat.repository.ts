@@ -12,6 +12,7 @@ export class ChatRepository extends BaseRepository<IChat> implements IChatReposi
 
   async createChat(data: Partial<IChat>): Promise<IChat> {
     try {
+      console.log('createChat')
       return await this.model.create(data);
     } catch (error) {
       if (error instanceof Error) {
@@ -21,18 +22,66 @@ export class ChatRepository extends BaseRepository<IChat> implements IChatReposi
     }
   }
 
-  async findOneByUsers(userIds: Types.ObjectId[]): Promise<IChat | null> {
-    try {
-      return await this.model.findOne({
-        users: { $all: userIds }
-      }).exec();
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Database Error (findOneByUsers): ${error.message}`);
-      }
-      throw new Error("Unknown error occurred in findOneByUsers");
+  // async findOneByUsers(userIds: Types.ObjectId[]): Promise<IChat | null> {
+  //   try {
+  //     return await this.model.findOne({
+  //       users: { $all: userIds }
+  //     }).exec();
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       throw new Error(`Database Error (findOneByUsers): ${error.message}`);
+  //     }
+  //     throw new Error("Unknown error occurred in findOneByUsers");
+  //   }
+  // }
+//   async findOneByUsers(
+//   userIds: Types.ObjectId[]
+// ): Promise<IChat | null> {
+//   try {
+//     return await this.model
+//       .findOne({
+//         users: {
+//           $all: userIds,
+//         },
+//       })
+//       .exec();
+//   } catch (error) {
+//     if (error instanceof Error) {
+//       throw new Error(
+//         `Database Error (findOneByUsers): ${error.message}`
+//       );
+//     }
+
+//     throw new Error(
+//       "Unknown error occurred in findOneByUsers"
+//     );
+//   }
+// }
+async findOneByUsers(
+  userIds: Types.ObjectId[]
+): Promise<IChat | null> {
+  try {
+    const participantsKey = userIds
+      .map(id => id.toString())
+      .sort()
+      .join("_");
+
+    return await this.model
+      .findOne({ participantsKey })
+      .exec();
+
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(
+        `Database Error (findOneByUsers): ${error.message}`
+      );
     }
+
+    throw new Error(
+      "Unknown error occurred in findOneByUsers"
+    );
   }
+}
 async findByChatId(id: Types.ObjectId): Promise<IChat | null> {
   try {
     console.log('findByChatId',id)
@@ -116,6 +165,7 @@ async findAllByUserId(userId: Types.ObjectId): Promise<IChat[]> {
     throw new Error("Unknown error occurred in findAllByUserId");
   }
 }
+
 
 
 }

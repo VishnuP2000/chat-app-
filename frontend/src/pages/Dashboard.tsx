@@ -160,6 +160,7 @@ const Dashboard = (): JSX.Element => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  console.log('selectedChat',selectedChat)
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -236,22 +237,23 @@ useEffect(() => {
       setChattUser((prev) => {
         if (prev.some((c) => c._id === chat._id)) return prev;
 
-        return [
-          ...prev,
-          {
-            _id: chat._id,
-            name: user?.name ?? "Unknown User",
-            lastMessage:
-              typeof chat.lastMessage === "string"
-                ? chat.lastMessage
-                : (chat.lastMessage?.content ?? ""),
-            timestamp: new Date(chat.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            unread: 0,
-          },
-        ];
+       return [
+  ...prev,
+  {
+    _id: chat._id,
+    name: user?.name ?? "Unknown User",
+    receiverId: String(user?._id),
+    lastMessage:
+      typeof chat.lastMessage === "string"
+        ? chat.lastMessage
+        : (chat.lastMessage?.content ?? ""),
+    timestamp: new Date(chat.createdAt).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    unread: 0,
+  },
+];
       });
 
       setSelectedChat(chat._id);
@@ -348,7 +350,7 @@ useEffect(() => {
         const chats = await getAllChats();
         const userId = localStorage.getItem("userId"); // or from auth state
         console.log("userId", userId);
-        setChattUser(normalizeChats(chats, userId!));
+        setChattUser(normalizeChats(chats, userId!)); //userId as string
       } catch (err) {
         console.error("Failed to load chats", err);
       }

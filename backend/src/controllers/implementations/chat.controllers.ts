@@ -202,16 +202,51 @@ async getReceivedRequests(req:AuthRequest,res:Response) {
     
   }
 }
-// async acceptRequest(req: AuthRequest, res: Response) {
-//     const { requestId } = req.params;
+async acceptRequest(req: AuthRequest, res: Response) {
+    try {
+      console.log('acceptRequest')
+      const { requestId } = req.params;
+      console.log('requestId',requestId)
+      const userId = req.user?.id;
+      console.log('userId',userId)
 
-//     await this.chatRequestService.acceptRequest(requestId);
+        if (!requestId) {
+      return res.status(400).json({
+        success: false,
+        message: "Request ID is required",
+      });
+    }
+        if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+    const chat = await this.chatservice.acceptRequest(requestId,userId);
 
-//     return res.json({
-//         success: true,
-//     });
-// }
-// async rejectRequest(req: AuthRequest, res: Response) {
+      return res.status(200).json({
+      success: true,
+      message: "Request accepted and chat created",
+      data: chat,
+    });
+
+    } catch (error) {
+        console.error("Accept request error:", error);
+
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to accept request",
+    });
+  }
+//     }
+//     async rejectRequest(req: AuthRequest, res: Response) {
 //     const { requestId } = req.params;
 
 //     await this.chatRequestService.rejectRequest(requestId);
@@ -221,5 +256,7 @@ async getReceivedRequests(req:AuthRequest,res:Response) {
 //     });
 // }  
 }
+}
+
 
 export const chatControllers = Container.get(ChatControllers);
