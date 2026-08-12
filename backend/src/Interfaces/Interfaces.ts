@@ -1,5 +1,6 @@
 import { Request } from "express";
 import { IChat } from "../models/chat.modal";
+import { IChatRequest } from "../models/chatRequest.modal";
 
 export interface AuthResponse {
   message: string;
@@ -26,6 +27,11 @@ export interface giveChatResult{
   message:string,
   success: boolean;
   data:IChat
+}
+export interface giveMessageResult{
+  message:string;
+  success: boolean;
+  data:IChat;
 }
 
 export interface AuthRequset extends Request {

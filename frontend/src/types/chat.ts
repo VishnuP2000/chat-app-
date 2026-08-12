@@ -43,22 +43,33 @@ export interface IChat {
   lastMessage: string | IMessage | null;
 }
 
-
 export interface IMessage {
-  _id?: string;
-  chatRoomId: string;
-  senderId: string;
-  senderType: "user" | "provider";
+  _id: string;
   content: string;
-  image?: string;
-  replyToMessageId?: string;
-  replyToMessage?: IMessage;
-  isSeen: boolean;
+  senderId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  status: string;
   createdAt: string;
-  updatedAt: string;
-  id: string;
-  // text: string;
-  // sender: "me" | "other";
-  // timestamp: string;
-  // avatar?: string;
+  timestamp: string;
 }
+// export interface IMessage {
+//   _id?: string;
+//   chatRoomId: string;
+//   senderId: string;
+//   senderType: "user" | "provider";
+//   content: string;
+//   image?: string;
+//   replyToMessageId?: string;
+//   replyToMessage?: IMessage;
+//   isSeen: boolean;
+//   createdAt: string;
+//   updatedAt: string;
+//   id: string;
+//   // text: string;
+//   // sender: "me" | "other";
+//   // timestamp: string;
+//   // avatar?: string;
+// }

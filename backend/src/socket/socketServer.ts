@@ -9,7 +9,7 @@ export const initSocketServer = (httpServer: HttpServer): Server => {
   io = new Server(httpServer, {
     cors: {
       origin: "http://localhost:5173", // matches frontend url in vite config (can also handle 5174 etc)
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "PATCH"],
       credentials: true,
     },
   });

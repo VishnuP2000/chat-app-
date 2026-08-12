@@ -31,6 +31,7 @@ import type { IChat, IMessage, IUser } from "@/types/chat";
 import { clickUser } from "@/service/Api/messageApi";
 // import { connectSocket } from "@/socket/socket";
 import { io, type Socket } from "socket.io-client";
+import { useAuth } from "@/context/AuthContext";
 // import { Socket } from "dgram";
 
 // interface Chat extends IChatRoom {
@@ -51,14 +52,20 @@ interface Chat {
   avatar?: string;
   isOnline?: boolean;
 }
-
+interface IMessageSender {
+  _id: string;
+  name: string;
+  email: string;
+}
 interface UIMessage {
   id: string;
   text: string;
   sender: "me" | "other";
+  senderId:IMessageSender;
   timestamp: string;
   avatar?: string;
 }
+
 
 interface Theme {
   id: string;
@@ -175,6 +182,7 @@ const Dashboard = (): JSX.Element => {
     localStorage.setItem("chat-theme", theme.id);
     setShowThemeMenu(false);
   };
+  const {user}=useAuth()
 
   const [users, setUsers] = useState<IUser[]>([]); //   fetch full loged data
   // console.log('users',users)
@@ -184,20 +192,39 @@ const Dashboard = (): JSX.Element => {
   const [showNewChat, setShowNewChat] = useState(false);
   const [userSearch, setUserSearch] = useState("");
 
-  const [messages, setMessages] = useState<UIMessage[]>([]);
-
+  const [messages, setMessages] = useState<IMessage[]>([]);
+console.log('messages&&&&',messages)
   const [socketState,setSocketState]=useState <Socket|null> ()
+  console.log('socketState',socketState)
 
   /* add the database chat users in the chattUser after click the fetching function */
   const [chattUser, setChattUser] = useState<Chat[]>([]);
 
 
-useEffect(() => {
-  const token = localStorage.getItem("access-token");
-  if (!token) return;
+  useEffect(() => {
+  const token = localStorage.getItem("accessToken");
+console.log('toke',token)
+  if (!token) {
+    console.log("❌ No access token");
+    return;
+  }
 
   const socket = io(import.meta.env.VITE_USER_BASE_URL, {
-    auth: { token },
+    auth: {
+      token,
+    },
+  });
+
+  socket.on("connect", () => {
+    console.log("✅ Socket connected:", socket.id);
+  });
+
+  socket.on("connect_error", (error) => {
+    console.error("❌ Socket connection error:", error.message);
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("❌ Socket disconnected:", reason);
   });
 
   setSocketState(socket);
@@ -224,7 +251,7 @@ useEffect(() => {
   };
 
   const selectedChatData = chattUser.find((chat) => chat._id === selectedChat);
-
+console.log("selectedChatData:", selectedChatData);
   /*-----------------add chat users in the database --------------------*/
 
   const addChatUsers = async (userMail: string) => {
@@ -293,7 +320,6 @@ useEffect(() => {
         );
       }
 
-      // setMessages(res as unknown as Message[]);
     } catch (error) {
       console.error("Failed to fetch messages", error);
     }
@@ -365,10 +391,12 @@ useEffect(() => {
     try {
       console.log("fetchMessage", chatId);
       const res = await clickUser(chatId);
-      const uiMessages: UIMessage[] = res.messages.map(mapIMessageToUIMessage);
-      console.log("uiMessages", uiMessages);
+      // const uiMessages: UIMessage[] = res.messages.map(mapIMessageToUIMessage);
+      // console.log("uiMessages", uiMessages);
+      console.log("res", res);
 
-      setMessages(uiMessages);
+      // setMessages(uiMessages);
+      setMessages(res.messages)
     } catch (error) {
       console.error("it is fetchMessage error", error);
     }
@@ -380,51 +408,75 @@ useEffect(() => {
   //     minute: "2-digit",
   //   });
 
-  const mapIMessageToUIMessage = (msg: IMessage): UIMessage => {
-    return {
-      id: msg._id ?? msg.id,
-      text: msg.content,
-      sender: msg.senderType === "user" ? "me" : "other",
-      timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+// const mapIMessageToUIMessage = (msg: IMessage): UIMessage => {
+//   return {
+//     id: msg._id ?? msg.id,
+//     text: msg.content,
+
+//     // senderId: String(
+//     //   typeof msg.senderId === "object"? msg.senderId: msg.senderId
+//     // ),
+//     senderId:msg.senderId._Id,
+
+//     sender: "other",
+
+//     timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+//       hour: "2-digit",  
+//       minute: "2-digit",
+//     }),
+//   };
+// };
+
+  const handleSendMessage = async () => {
+  if (!messageInput.trim() || !selectedChat) return;
+
+  if (!socketState) {
+    console.error("❌ Socket is not initialized");
+    toast.error("Socket is not connected");
+    return;
+  }
+
+  if (!socketState.connected) {
+    console.error("❌ Socket is not connected");
+    toast.error("Socket is not connected");
+    return;
+  }
+
+  try {
+    setIsSending(true);
+
+    const message = {
+      chatId: selectedChat,
+      receiverId: selectedChatData?.receiverId,
+      content: messageInput.trim(),
+    };
+    console.log("receiverId:", selectedChatData?.receiverId);
+
+    console.log("📤 Sending message:", message);
+    console.log("🔌 Socket ID:", socketState.id);
+
+    socketState.emit("send-message", message);
+
+    const newUIMessage: IMessage = {
+      id: Math.random().toString(36).substring(7),
+      content: messageInput.trim(),
+      sender: "me",
+      senderId:user?.id,
+      timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       }),
     };
-  };
 
-  const handleSendMessage = async () => {
-    console.log('handleSendMessage')
-    if (!messageInput.trim() || !selectedChat) return;
+    setMessages((prev) => [...prev, newUIMessage]);
+    setMessageInput("");
 
-    try {
-      setIsSending(true);
-      console.log("enter handleSendMessage");
-      const message={
-        chatId:selectedChat,
-        receiverId:selectedChatData?.receiverId,
-        content:messageInput.trim()
-      }
-      socketState?.emit("send-message",message)
-      console.log("message");
-
-      const newUIMessage: UIMessage = {
-        id: Math.random().toString(36).substring(7),
-        text: messageInput.trim(),
-        sender: "me",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      console.log('enter newUIMessage')
-      setMessages((prev) => [...prev, newUIMessage]);
-      setMessageInput("");
-    } catch (error) {
-      console.error("Failed to send message", error);
-    } finally {
-      setIsSending(false);
-    }
-  };
+  } catch (error) {
+    console.error("Failed to send message", error);
+  } finally {
+    setIsSending(false);
+  }
+};
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -493,7 +545,7 @@ useEffect(() => {
             >
               <GrAdd className="h-5 w-5" />
             </button>
-            <button
+            {/* <button
               onClick={() => {
                 setShowThemeMenu(!showThemeMenu);
                 setShowUserMenu(false);
@@ -502,7 +554,7 @@ useEffect(() => {
               title="Change Theme"
             >
               <IconPalette className="h-5 w-5" />
-            </button>
+            </button> */}
             <button
               onClick={() => {
                 setShowUserMenu(!showUserMenu);
@@ -514,7 +566,7 @@ useEffect(() => {
               <IconDotsVertical className="h-5 w-5" />
             </button>
 
-            <AnimatePresence>
+            {/* <AnimatePresence>
               {showThemeMenu && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -537,7 +589,7 @@ useEffect(() => {
                   ))}
                 </motion.div>
               )}
-            </AnimatePresence>
+            </AnimatePresence> */}
 
             <AnimatePresence>
               {showUserMenu && (
@@ -547,8 +599,9 @@ useEffect(() => {
                   exit={{ opacity: 0, y: -10 }}
                   className="absolute right-0 top-12 z-50 w-48 rounded-xl bg-slate-900/95 p-2 backdrop-blur-xl ring-1 ring-white/20 shadow-2xl"
                 >
-                  <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10">
-                    <IconUser className="h-4 w-4" />
+                  <button onClick={()=>navigate('/Profile')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10">
+                   <IconUser className="h-4 w-4" 
+                    />
                     Profile
                   </button>
                   <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10">
@@ -765,51 +818,61 @@ useEffect(() => {
             <div className="flex-1 overflow-y-auto p-6">
               <div className="mx-auto max-w-3xl space-y-4">
                 <AnimatePresence>
-                  {messages.map((message, index) => (
-                    <motion.div 
-                      key={message.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`flex ${
-                        message.sender === "me"
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`flex max-w-[70%] items-end gap-2 ${
-                          message.sender === "me"
-                            ? "flex-row-reverse"
-                            : "flex-row"
-                        }`}
-                      >
-                        {message.sender === "other" && (
-                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all duration-500 ${currentTheme.avatarGlow}`}>
-                            {selectedChatData?.name?.charAt(0)}
-                          </div>
-                        )}
-                        <div
-                          className={`rounded-2xl px-4 py-2.5 transition-all duration-500 ${
-                            message.sender === "me"
-                              ? currentTheme.chatBubbleMe
-                              : currentTheme.chatBubbleOther
-                          }`}
-                        >
-                          <p className="text-sm">{message.text}</p>
-                          <p
-                            className={`mt-1 text-xs transition-colors duration-500 ${
-                              message.sender === "me"
-                                ? "text-white/70"
-                                : "text-slate-400"
-                            }`}
-                          >
-                            {message.timestamp}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+{messages.map((message, index) => {
+  const currentUserId = String(user?.id);
+
+  const senderId =
+    typeof message.senderId === "object"
+      ? String(message.senderId._id)
+      : String(message.senderId);
+
+  const isMe = currentUserId === senderId;
+
+  console.log("CURRENT USER:", currentUserId);
+  console.log("SENDER:", senderId);
+  console.log("IS ME:", isMe);
+
+  return (
+    <motion.div
+      key={message._id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className={`flex w-full ${
+        isMe ? "justify-end" : "justify-start"
+      }`}
+    >
+      <div
+        className={`flex max-w-[70%] items-end gap-2 ${
+          isMe ? "flex-row-reverse" : "flex-row"
+        }`}
+      >
+        {!isMe && (
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${currentTheme.avatarGlow}`}
+          >
+            {selectedChatData?.name?.charAt(0)}
+            {/* {isMe?message.} */}
+          </div>
+        )}
+
+        <div
+          className={`rounded-2xl px-4 py-2.5 ${
+            isMe
+              ? currentTheme.chatBubbleMe
+              : currentTheme.chatBubbleOther
+          }`}
+        >
+          <p className="text-sm">{message.content}</p>
+
+          <p className="mt-1 text-xs">
+            {message.timestamp}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+})}
                 </AnimatePresence>
                 <div ref={messagesEndRef} />
               </div>

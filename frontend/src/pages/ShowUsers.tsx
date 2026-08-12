@@ -98,6 +98,7 @@ const fetchAcceptRequest = async (requestId:string) => {
       request.sender === data._id &&
       request.status === "pending"
   );
+  const accepted=requests.some((req)=>(req.status=="accepted"))
 
   return (
     <div
@@ -120,7 +121,9 @@ const fetchAcceptRequest = async (requestId:string) => {
           title="Accept"
           onClick={() => fetchAcceptRequest(receivedRequest._id)}
         />
-      ) : (
+      ) :accepted?<Button
+      title="chat"
+      /> :(
         <Button
           title="Request"
           onClick={() => sendRequest(data._id)}

@@ -90,13 +90,14 @@ async findByChatId(id: Types.ObjectId): Promise<IChat | null> {
       path: "users",
       select: "name email"
     })
-    .populate({
-      path: "messages",
-      populate: {
-        path: "senderId",
-        select: "name email"
-      }
-    })
+      .populate({
+        path: "messages",
+        select: "content senderId status createdAt",
+        populate: {
+          path: "senderId",
+          select: "name email _id",
+        },
+      })
     .populate({
       path: "lastMessage",
       select: "content senderId createdAt"
@@ -117,13 +118,14 @@ async updateAndPopulate(id: Types.ObjectId, update: Record<string, any>): Promis
         path: "users",
         select: "name email"
       })
-      .populate({
-        path: "messages",
-        populate: {
-          path: "senderId",
-          select: "name email"
-        }
-      })
+.populate({
+  path: "messages",
+  select: "content senderId status createdAt",
+  populate: {
+    path: "senderId",
+    select: "name email",
+  },
+})
       .populate({
         path: "lastMessage",
         select: "content senderId createdAt"
@@ -146,13 +148,14 @@ async findAllByUserId(userId: Types.ObjectId): Promise<IChat[]> {
       path: "users",
       select: "name email"
     })
-    .populate({
-      path: "messages",
-      populate: {
-        path: "senderId",
-        select: "name email"
-      }
-    })
+.populate({
+  path: "messages",
+  select: "content senderId status createdAt",
+  populate: {
+    path: "senderId",
+    select: "name email",
+  },
+})
     .populate({
       path: "lastMessage",
       select: "content senderId createdAt"

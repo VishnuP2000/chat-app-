@@ -25,7 +25,7 @@ export const registerSocketEvents = (io: Server) => {
 
     // join-chat: User joins a specific chat room
     socket.on("join-chat", (data: { chatId: string } | string) => {
-      console.log('enter join-chat')
+      console.log('enter join-chat',data)
       const chatId = typeof data === 'string' ? data : data?.chatId;
       if (chatId) {
         socket.join(chatId);
@@ -44,45 +44,82 @@ export const registerSocketEvents = (io: Server) => {
     });
 
     // send-message: Alice sends a message to Bob
-    socket.on("send-message", async (data: { chatId: string; receiverId: string; content: string }) => {
-      console.log('ente soket')
-      const { chatId, receiverId, content } = data;
-      if (!currentUserId) {
-        console.error("send-message error: currentUserId not set for socket " + socket.id);
+  socket.on( "send-message",async (data: { chatId: string;receiverId: string;content: string;}) => {
+
+    console.log("🔥 SEND MESSAGE EVENT RECEIVED");
+    console.log("📦 Data:", data);
+    console.log("👤 Current user:", currentUserId);
+
+    const { chatId, receiverId, content } = data;
+
+    if (!currentUserId) {
+      console.error("❌ currentUserId missing");
+      return;
+    }
+
+    if (!chatId) {
+      console.error("❌ chatId missing");
+      return;
+    }
+
+    if (!receiverId) {
+      console.error("❌ receiverId missing");
+      return;
+    }
+
+    if (!content?.trim()) {
+      console.error("❌ content missing");
+      return;
+    }
+
+    try {
+      const result = await messageservice.foundMessages(
+        chatId,
+        content,
+        currentUserId
+      );
+
+      console.log("✅ Message saved:", result);
+
+      const chat = result.data;
+
+      if (!chat?.messages?.length) {
+        console.log("⚠️ No messages returned");
         return;
       }
 
-      try {
-        // Save using MessageService (which uses MessageRepository)
-        const result = await messageservice.foundMessages(chatId, content, currentUserId);
-        console.log('result ',result)
-        const chat = result.data;
+      const latestMessage =
+        chat.messages[chat.messages.length - 1];
 
-        if (chat && chat.messages && chat.messages.length > 0) {
-          console.log('enter if ')
-          const latestMessage = chat.messages[chat.messages.length - 1];
-          console.log('lastMessage',latestMessage)
+      console.log("📨 Latest message:", latestMessage);
 
-          // Emit to all users in the chat room except sender
-          socket.to(chatId).emit("receive-message", latestMessage);
+      socket
+        .to(chatId)
+        .emit("receive-message", latestMessage);
 
-          // If the receiver is online, notify them (potentially multiple sockets)
-          const receiverSockets = onlineUsers.get(receiverId);
-          if (receiverSockets && receiverSockets.size > 0) {
-            console.log('enter the receiverSokets')
-            receiverSockets.forEach(socketId => {
-              io.to(socketId).emit("new-message-notification", {
-                chatId,
-                message: latestMessage,
-              });
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error in send-message handler:", error);
-        socket.emit("error", { message: "Failed to send message" });
+      const receiverSockets = onlineUsers.get(receiverId);
+
+      if (receiverSockets) {
+        receiverSockets.forEach((socketId) => {
+          io.to(socketId).emit(
+            "new-message-notification",
+            {
+              chatId,
+              message: latestMessage,
+            }
+          );
+        });
       }
-    });
+
+    } catch (error) {
+      console.error("❌ Error sending message:", error);
+
+      socket.emit("error", {
+        message: "Failed to send message",
+      });
+    }
+  }
+);
 
     // typing: Alice is typing...
     socket.on("typing", (data: { chatId: string }) => {

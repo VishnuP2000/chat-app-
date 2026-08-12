@@ -1,24 +1,23 @@
-import Container, { Service } from "typedi";
+import Container, { Inject, Service } from "typedi";
 import { IMessageService } from "../../interface/messages/message.IService";
 import { IChatRepository } from "../../../repositories/interface/chat.Irepository";
-import { chatRepository } from "../../../repositories/implementations/chat.repository";
+import { ChatRepository } from "../../../repositories/implementations/chat.repository";
 import { IMessageRepository } from "../../../repositories/interface/message.IRepository";
-import { messageRepository } from "../../../repositories/implementations/message.repository";
+import { MessageRepository } from "../../../repositories/implementations/message.repository";
 import { IChat } from "../../../models/chat.modal";
-import { giveChatResult } from "../../../Interfaces/Interfaces";
+import { giveChatResult, giveMessageResult } from "../../../Interfaces/Interfaces";
 import { Types } from "mongoose";
 import { AppError } from "../../../utils/customError";
 import { HttpStatus } from "../../../enum/httpStatus";
 
 @Service()
 export class messageService implements IMessageService {
-  private chatRepo: IChatRepository<IChat>;
-  private messageRepo: IMessageRepository;
-
-  constructor() {
-    this.chatRepo = chatRepository;
-    this.messageRepo = messageRepository;
-  }
+  constructor(
+    @Inject(()=>ChatRepository)
+    private readonly chatRepo:IChatRepository<IChat>, 
+    @Inject(()=>MessageRepository)
+    private readonly messageRepo:IMessageRepository,
+  ){}
 
   async foundMessages(
     chatId: string,
@@ -77,7 +76,7 @@ export class messageService implements IMessageService {
     return { success: true, message: "message send", data: updatedChat };
   }
 
-  async findUserId(userChatId: string): Promise<giveChatResult> {
+  async findUserId(userChatId: string): Promise<giveMessageResult> {
     console.log("findUser", userChatId);
     const usersUserChatId = new Types.ObjectId(userChatId);
     const response = await this.chatRepo.findByChatId(usersUserChatId);

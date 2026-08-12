@@ -1,6 +1,6 @@
-import Container, { Service } from "typedi";
+import Container, { Inject, Service } from "typedi";
 import { IMessageService } from "../../services/interface/messages/message.IService";
-import { messageservice } from "../../services/implementations/messages/messages.service";
+import { messageService } from "../../services/implementations/messages/messages.service";
 import { ChatService } from "../../services/implementations/chat/chat.service";
 import { IChatService } from "../../services/interface/chat/chat.IService";
 import { Request, Response } from "express";
@@ -8,10 +8,10 @@ import { AuthRequset } from "../../Interfaces/Interfaces";
 
 @Service()
 export class messageControllers {
-  private messageservice: IMessageService;
-  constructor() {
-    this.messageservice = messageservice;
-  }
+  constructor(
+    @Inject(()=>messageService)
+    private readonly messageservice:IMessageService,
+  ){}
   async sendMessage(req: AuthRequset, res: Response) {
     try {
       console.log("ControllersendMessage");
