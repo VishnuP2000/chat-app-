@@ -22,41 +22,7 @@ export class ChatRepository extends BaseRepository<IChat> implements IChatReposi
     }
   }
 
-  // async findOneByUsers(userIds: Types.ObjectId[]): Promise<IChat | null> {
-  //   try {
-  //     return await this.model.findOne({
-  //       users: { $all: userIds }
-  //     }).exec();
-  //   } catch (error) {
-  //     if (error instanceof Error) {
-  //       throw new Error(`Database Error (findOneByUsers): ${error.message}`);
-  //     }
-  //     throw new Error("Unknown error occurred in findOneByUsers");
-  //   }
-  // }
-//   async findOneByUsers(
-//   userIds: Types.ObjectId[]
-// ): Promise<IChat | null> {
-//   try {
-//     return await this.model
-//       .findOne({
-//         users: {
-//           $all: userIds,
-//         },
-//       })
-//       .exec();
-//   } catch (error) {
-//     if (error instanceof Error) {
-//       throw new Error(
-//         `Database Error (findOneByUsers): ${error.message}`
-//       );
-//     }
 
-//     throw new Error(
-//       "Unknown error occurred in findOneByUsers"
-//     );
-//   }
-// }
 async findOneByUsers(
   userIds: Types.ObjectId[]
 ): Promise<IChat | null> {

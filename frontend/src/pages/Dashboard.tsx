@@ -191,6 +191,7 @@ const Dashboard = (): JSX.Element => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [userSearch, setUserSearch] = useState("");
+  console.log('userSearch',userSearch)
 
   const [messages, setMessages] = useState<IMessage[]>([]);
 console.log('messages&&&&',messages)
@@ -565,31 +566,6 @@ console.log("selectedChatData:", selectedChatData);
             >
               <IconDotsVertical className="h-5 w-5" />
             </button>
-
-            {/* <AnimatePresence>
-              {showThemeMenu && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 top-12 z-50 w-52 rounded-xl bg-slate-900/95 p-2 backdrop-blur-xl ring-1 ring-white/20 shadow-2xl"
-                >
-                  <p className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Select Theme</p>
-                  {themes.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => handleThemeChange(t)}
-                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-white/10 ${
-                        currentTheme.id === t.id ? "bg-white/15 font-semibold text-white" : "text-slate-300"
-                      }`}
-                    >
-                      <span className={`h-3 w-3 rounded-full shrink-0 ${t.primaryGlow}`} />
-                      {t.name}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence> */}
 
             <AnimatePresence>
               {showUserMenu && (

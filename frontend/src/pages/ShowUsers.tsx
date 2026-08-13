@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getAcceptRequest, getReceivedRequests, getSentRequests, requestFetch, usersFetch } from "@/service/Api/chatApi";
 import { IRequest, IUser } from "@/types/chat";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 function ShowUsers() {
@@ -12,10 +13,13 @@ function ShowUsers() {
   const [requests, setRequests] = useState<IRequest[]>([]);
   console.log('requests',requests)
   const [receivedRequests, setReceivedRequests] = useState<IRequest[]>([]);
+  console.log('receivedRequests',receivedRequests)
   const [totalPages, setTotalPages] = useState(1);
   const {user}=useAuth()
+  const navigate=useNavigate()
   console.log("users:", users);
 console.log("requests:", requests);
+
 
   useEffect(() => {
     fetchUsers();
@@ -41,42 +45,64 @@ console.log("requests:", requests);
     try {
       console.log('enter sendRequest',userId)
       const response=await requestFetch(userId)
-      console.log('response++',response.data)
+      console.log('sendRequest++',response.data)
       setRequests((prev)=> [...prev, response.data])
       toast.success("Request sent");
     } catch (error) {
       console.log('error',error)
+          toast.error(
+      "Failed to send request"
+    );
     }
   }
 const fetchSentRequests = async () => {
   try {
     const response = await getSentRequests();
-    console.log('response---',response.data)
+     console.log("SENT REQUESTS:", response.data);
     setRequests(response.data ?? []);
+    // setRequests((prev)=>[...prev,response.data])
   } catch (error) {
     console.error("error",error);
+        toast.error(
+      "Failed to send request"
+    );
   }
 };
 const fetchReceivedRequests = async () => {
   try {
     const response = await getReceivedRequests();
-    console.log('response******',response.data)
+      console.log("RECEIVED REQUESTS:", response.data);
     setReceivedRequests(response.data ?? []);
+    // setReceivedRequests((prev)=>[...prev,response.data]);
   } catch (error) {
     console.error("Error fetching received requests:", error);
   }
 };
-const fetchAcceptRequest = async (requestId:string) => {
+const fetchAcceptRequest = async (requestId: string) => {
   try {
     const response = await getAcceptRequest(requestId);
-    console.log('response acceptRequest',response.data)
-     toast.success("Request accepted");
-    // setReceivedRequests(response.data ?? []);
+
+    console.log("Accepted response:", response.data);
+
+    // await Promise.all([
+    //   fetchSentRequests(),
+    //   fetchReceivedRequests(),
+    // ]);
         setReceivedRequests((prev) =>
-      prev.filter((request) => request._id !== requestId)
+      prev.map((request) =>
+        request._id === requestId
+          ? {
+              ...request,
+              status: "accepted",
+            }
+          : request
+      )
     );
+
+    toast.success("Request accepted");
+
   } catch (error) {
-    console.error("Error fetching received requests:", error);
+    console.error("Error accepting request:", error);
   }
 };
 
@@ -87,18 +113,20 @@ const fetchAcceptRequest = async (requestId:string) => {
       <Navbar />
  <div className="flex gap-4 p-4">
 {users.map((data) => {
-  const hasPendingRequest = requests.some(
+  const allRequests = [...requests, ...receivedRequests];
+  console.log('allRequest',allRequests)
+
+  const request = allRequests.find(
     (req) =>
-     ( req.receiver === data._id &&
-      req.status === "pending")
-    );
-    console.log('data._Id',data._id,data.name)
-      const receivedRequest = receivedRequests.find(
-    (request) =>
-      request.sender === data._id &&
-      request.status === "pending"
+      (req.sender === user?.id &&
+        req.receiver === data._id) ||
+      (req.receiver === user?.id &&
+        req.sender === data._id)
   );
-  const accepted=requests.some((req)=>(req.status=="accepted"))
+
+  console.log("Logged user:", user?.id);
+  console.log("User card:", data._id);
+  console.log("Request found:", request);
 
   return (
     <div
@@ -106,24 +134,38 @@ const fetchAcceptRequest = async (requestId:string) => {
       className="bg-amber-500 w-[300px] h-[400px] p-4 rounded-lg"
     >
       <img src={data.image.url} alt={data.name} />
-
+       <p><strong>job:</strong>software developer</p>
       <p>
         <strong>Name:</strong> {data.name}
       </p>
 
-      {hasPendingRequest ? (
+      {!request ? (
         <Button
-          title="Pending"
-          // disabled
+          title="Request"
+          onClick={() => sendRequest(data._id)}
         />
-      ) : receivedRequest ? (
+
+      ) : request.status === "pending" ? (
+
+        request.sender === user?.id ? (
+          <Button title="Pending" />
+        ) : (
+          <Button
+            title="Accept"
+            onClick={() => fetchAcceptRequest(request._id)}
+          />
+        )
+
+      ) : request.status === "accepted" ? (
+
         <Button
-          title="Accept"
-          onClick={() => fetchAcceptRequest(receivedRequest._id)}
+        className="bg-emerald-600 hover:bg-emerald-700"
+          title="Chat"
+          onClick={()=>navigate('/Dashboard')}
         />
-      ) :accepted?<Button
-      title="chat"
-      /> :(
+
+      ) : (
+
         <Button
           title="Request"
           onClick={() => sendRequest(data._id)}
