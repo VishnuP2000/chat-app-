@@ -46,6 +46,7 @@ export interface IChat {
 export interface IMessage {
   _id: string;
   content: string;
+    sender: string;
   senderId: {
     _id: string;
     name: string;

@@ -1,6 +1,7 @@
 "use client";
-
-import React, { JSX, useState } from "react";
+import Cropper, { Area } from "react-easy-crop";
+// import { useCallback } from "react";
+import React, { JSX, useState,useCallback } from "react";
 import { Label } from "../components/ui/label";
 import { Input } from "../components/ui/input";
 import { cn } from "@/lib/utils";
@@ -46,7 +47,18 @@ function SignUpPage(): JSX.Element {
   const [errors, setErrors] = useState<FormErrors>({});
   const [image, setImage] = useState<File | null>(null);
 
-  
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+const [showCropper, setShowCropper] = useState(false);
+
+const [crop, setCrop] = useState({
+  x: 0,
+  y: 0,
+});
+
+const [zoom, setZoom] = useState(1);
+
+const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+console.log('cropedArea',croppedAreaPixels)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const id = e.target.id as keyof SignUpFormData;
@@ -95,6 +107,98 @@ function SignUpPage(): JSX.Element {
       toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
+    const onCropComplete = useCallback(
+  (_croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  },
+  []
+);
+const createImage = (url: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.src = url;
+
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+  });
+};
+
+const handleCropImage = async () => {
+  if (!imagePreview || !croppedAreaPixels) return;
+
+  try {
+    const imageElement = await createImage(imagePreview);
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = croppedAreaPixels.width;
+    canvas.height = croppedAreaPixels.height;
+
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return;
+
+    ctx.drawImage(
+      imageElement,
+      croppedAreaPixels.x,
+      croppedAreaPixels.y,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height,
+      0,
+      0,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height
+    );
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+
+        const croppedFile = new File(
+          [blob],
+          "profile-image.jpg",
+          {
+            type: "image/jpeg",
+          }
+        );
+
+        setImage(croppedFile);
+
+        setImagePreview(
+          URL.createObjectURL(croppedFile)
+        );
+
+        setShowCropper(false);
+
+        toast.success("Image cropped successfully");
+      },
+      "image/jpeg",
+      0.95
+    );
+  } catch (error) {
+    console.error("Crop error:", error);
+    toast.error("Failed to crop image");
+  }
+};
+  const handleImageChange = (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    toast.error("Please select a valid image");
+    return;
+  }
+
+
+  const previewUrl = URL.createObjectURL(file);
+
+  setImagePreview(previewUrl);
+  setShowCropper(true);
+};
 
   const fadeInUp = {
     hidden: { opacity: 0, y: 24 },
@@ -187,17 +291,29 @@ function SignUpPage(): JSX.Element {
                 className="space-y-4"
               >
                 <LabelInputContainer>
-                  <input 
-                  className="cursor-pointer"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e)=>{
-                    if(e.target.files?.length){
-                      setImage(e.target.files[0])
-                    }
-                  }
-                  }
-                   />
+<div className="space-y-3">
+  <input
+    className="cursor-pointer"
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+  />
+
+  {image && imagePreview && !showCropper && (
+    <div className="flex items-center gap-3">
+      <img
+        src={imagePreview}
+        alt="Profile preview"
+        className="h-16 w-16 rounded-full object-cover ring-2 ring-purple-400"
+      />
+
+      <p className="text-sm text-slate-300">
+        Profile image selected
+      </p>
+    </div>
+  )}
+</div>     
+            
                 </LabelInputContainer>
                 <LabelInputContainer>
                   <Input
@@ -358,6 +474,85 @@ function SignUpPage(): JSX.Element {
           </motion.div>
         </motion.div>
       </main>
+      <AnimatePresence>
+  {showCropper && imagePreview && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ scale: 0.95, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.95, y: 20 }}
+        className="w-full max-w-xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"
+      >
+        <h2 className="mb-2 text-xl font-bold text-white">
+          Crop Profile Image
+        </h2>
+
+        <p className="mb-5 text-sm text-slate-400">
+          Adjust your profile picture before creating your account.
+        </p>
+
+        <div className="relative h-[350px] w-full overflow-hidden rounded-2xl bg-black">
+          <Cropper
+            image={imagePreview}
+            crop={crop}
+            zoom={zoom}
+            aspect={1}
+            cropShape="rect"
+            showGrid={false}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={onCropComplete}
+          />
+        </div>
+
+        <div className="mt-5">
+          <div className="mb-2 flex justify-between text-sm text-slate-300">
+            <span>Zoom</span>
+            <span>{zoom.toFixed(1)}x</span>
+          </div>
+
+          <input
+            type="range"
+            min={1}
+            max={1}
+            step={0.1}
+            value={zoom}
+            onChange={(e) =>
+              setZoom(Number(e.target.value))
+            }
+            className="w-full cursor-pointer"
+          />
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setShowCropper(false);
+              setImagePreview(null);
+            }}
+            className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCropImage}
+            className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:scale-105"
+          >
+            Crop & Continue
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence> 
       <ToastContainer />
     </div>
   );

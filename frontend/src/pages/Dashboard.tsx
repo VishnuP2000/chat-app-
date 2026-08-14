@@ -59,7 +59,7 @@ interface IMessageSender {
 }
 interface UIMessage {
   id: string;
-  text: string;
+  content: string;
   sender: "me" | "other";
   senderId:IMessageSender;
   timestamp: string;
@@ -193,7 +193,7 @@ const Dashboard = (): JSX.Element => {
   const [userSearch, setUserSearch] = useState("");
   console.log('userSearch',userSearch)
 
-  const [messages, setMessages] = useState<IMessage[]>([]);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
 console.log('messages&&&&',messages)
   const [socketState,setSocketState]=useState <Socket|null> ()
   console.log('socketState',socketState)
@@ -392,12 +392,9 @@ console.log("selectedChatData:", selectedChatData);
     try {
       console.log("fetchMessage", chatId);
       const res = await clickUser(chatId);
-      // const uiMessages: UIMessage[] = res.messages.map(mapIMessageToUIMessage);
-      // console.log("uiMessages", uiMessages);
-      console.log("res", res);
+      const uiMessages = res.messages.map(mapIMessageToUIMessage);
 
-      // setMessages(uiMessages);
-      setMessages(res.messages)
+setMessages(uiMessages);
     } catch (error) {
       console.error("it is fetchMessage error", error);
     }
@@ -409,24 +406,25 @@ console.log("selectedChatData:", selectedChatData);
   //     minute: "2-digit",
   //   });
 
-// const mapIMessageToUIMessage = (msg: IMessage): UIMessage => {
-//   return {
-//     id: msg._id ?? msg.id,
-//     text: msg.content,
+const mapIMessageToUIMessage = (msg: IMessage): UIMessage => {
+  return {
+    id: msg._id,
+    content: msg.content,
 
-//     // senderId: String(
-//     //   typeof msg.senderId === "object"? msg.senderId: msg.senderId
-//     // ),
-//     senderId:msg.senderId._Id,
+    senderId: {
+      _id: user?.id ?? "",
+      name: user?.name ?? "",
+      email: user?.email ?? "",
+    },
 
-//     sender: "other",
+    sender: "other",
 
-//     timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
-//       hour: "2-digit",  
-//       minute: "2-digit",
-//     }),
-//   };
-// };
+    timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+};
 
   const handleSendMessage = async () => {
   if (!messageInput.trim() || !selectedChat) return;
@@ -458,16 +456,22 @@ console.log("selectedChatData:", selectedChatData);
 
     socketState.emit("send-message", message);
 
-    const newUIMessage: IMessage = {
-      id: Math.random().toString(36).substring(7),
-      content: messageInput.trim(),
-      sender: "me",
-      senderId:user?.id,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
+const newUIMessage: UIMessage = {
+  id: Math.random().toString(36).substring(7),
+  content: messageInput.trim(),
+  sender: "me",
+
+  senderId: {
+    _id: user?.id ?? "",
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+  },
+
+  timestamp: new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
+};
 
     setMessages((prev) => [...prev, newUIMessage]);
     setMessageInput("");
@@ -810,7 +814,7 @@ console.log("selectedChatData:", selectedChatData);
 
   return (
     <motion.div
-      key={message._id}
+      key={message.id}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
