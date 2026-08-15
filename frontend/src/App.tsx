@@ -16,10 +16,10 @@ function App() {
         <Route path={"/"} element={<Home />} />
         <Route path={"/Profile"} element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path={"/showUsers"} element={<ProtectedRoute><ShowUsers /></ProtectedRoute>} />
-        <Route path={"/Dashboard"} element={<ProtectedRoute><Dashboard/></ProtectedRoute>} />
+        {/* <Route path={"/Dashboard"} element={<ProtectedRoute><Dashboard/></ProtectedRoute>} /> */}
         <Route path={"/sign-in"} element={<SignIn />} />
         <Route path={"/sign-up"} element={<SignUp />} />
-        <Route path={"/dashboard"} element={<Dashboard />} />
+        <Route path={"/Dashboard"} element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       </Routes>
     </div>
   );

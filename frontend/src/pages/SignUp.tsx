@@ -1,12 +1,9 @@
 "use client";
 import Cropper, { Area } from "react-easy-crop";
-// import { useCallback } from "react";
-import React, { JSX, useState,useCallback } from "react";
-import { Label } from "../components/ui/label";
+import React, { JSX, useState, useCallback } from "react";
 import { Input } from "../components/ui/input";
 import { cn } from "@/lib/utils";
-import { IconBrandGoogle } from "@tabler/icons-react";
-import { publicAxios } from "@/service/axiosInstance/userInstance";
+import { IconBrandGoogle, IconEye, IconEyeOff, IconCamera } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import chatImage from "../assets/chat.png";
 import { toast, ToastContainer } from "react-toastify";
@@ -21,7 +18,7 @@ const LabelInputContainer = ({
   children: React.ReactNode;
   className?: string;
 }): JSX.Element => (
-  <div className={cn("mb-3 flex w-full flex-col space-y-2", className)}>
+  <div className={cn("flex w-full flex-col gap-1.5", className)}>
     {children}
   </div>
 );
@@ -46,23 +43,21 @@ function SignUpPage(): JSX.Element {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [image, setImage] = useState<File | null>(null);
-
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-const [showCropper, setShowCropper] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-const [crop, setCrop] = useState({
-  x: 0,
-  y: 0,
-});
-
-const [zoom, setZoom] = useState(1);
-
-const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-console.log('cropedArea',croppedAreaPixels)
+  console.log("cropedArea", croppedAreaPixels);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const id = e.target.id as keyof SignUpFormData;
     setForm({ ...form, [id]: e.target.value });
+    if (errors[id]) setErrors({ ...errors, [id]: undefined });
   };
 
   const validate = (): FormErrors => {
@@ -79,250 +74,253 @@ console.log('cropedArea',croppedAreaPixels)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    const formData=new FormData()
+    const formData = new FormData();
     const validationErrors = validate();
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
-      // const payload = {
-      //   name: form.name,
-      //   email: form.email,
-      //   password: form.password,
-      //   confirmPassword:form.confirmPassword
-      // };
-      formData.append('name',form.name)
-      formData.append('email',form.email)
-      formData.append('password',form.password)
-      formData.append('confirmPassword',form.confirmPassword)
-      if(image){
-        formData.append('image',image)
+      setIsLoading(true);
+      formData.append("name", form.name);
+      formData.append("email", form.email);
+      formData.append("password", form.password);
+      formData.append("confirmPassword", form.confirmPassword);
+      if (image) {
+        formData.append("image", image);
       }
       const response = await signUpRequest(formData);
-      console.log(response)
-      // localStorage.setItem("access-token", response.data.accessToken);
+      console.log(response);
       if (response.data.data.success) navigate("/sign-in");
       else toast.error(response.data.data.message || "Sign up failed");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Something went wrong");
+    } finally {
+      setIsLoading(false);
     }
   };
-    const onCropComplete = useCallback(
-  (_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  },
-  []
-);
-const createImage = (url: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
 
-    image.src = url;
+  const onCropComplete = useCallback(
+    (_croppedArea: Area, croppedAreaPixels: Area) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    []
+  );
 
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-  });
-};
+  const createImage = (url: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.src = url;
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+    });
+  };
 
-const handleCropImage = async () => {
-  if (!imagePreview || !croppedAreaPixels) return;
-
-  try {
-    const imageElement = await createImage(imagePreview);
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = croppedAreaPixels.width;
-    canvas.height = croppedAreaPixels.height;
-
-    const ctx = canvas.getContext("2d");
-
-    if (!ctx) return;
-
-    ctx.drawImage(
-      imageElement,
-      croppedAreaPixels.x,
-      croppedAreaPixels.y,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-      0,
-      0,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height
-    );
-
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-
-        const croppedFile = new File(
-          [blob],
-          "profile-image.jpg",
-          {
+  const handleCropImage = async () => {
+    if (!imagePreview || !croppedAreaPixels) return;
+    try {
+      const imageElement = await createImage(imagePreview);
+      const canvas = document.createElement("canvas");
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(
+        imageElement,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        0,
+        0,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height
+      );
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return;
+          const croppedFile = new File([blob], "profile-image.jpg", {
             type: "image/jpeg",
-          }
-        );
+          });
+          setImage(croppedFile);
+          setImagePreview(URL.createObjectURL(croppedFile));
+          setShowCropper(false);
+          toast.success("Image cropped successfully");
+        },
+        "image/jpeg",
+        0.95
+      );
+    } catch (error) {
+      console.error("Crop error:", error);
+      toast.error("Failed to crop image");
+    }
+  };
 
-        setImage(croppedFile);
-
-        setImagePreview(
-          URL.createObjectURL(croppedFile)
-        );
-
-        setShowCropper(false);
-
-        toast.success("Image cropped successfully");
-      },
-      "image/jpeg",
-      0.95
-    );
-  } catch (error) {
-    console.error("Crop error:", error);
-    toast.error("Failed to crop image");
-  }
-};
-  const handleImageChange = (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
-  const file = e.target.files?.[0];
-
-  if (!file) return;
-
-  if (!file.type.startsWith("image/")) {
-    toast.error("Please select a valid image");
-    return;
-  }
-
-
-  const previewUrl = URL.createObjectURL(file);
-
-  setImagePreview(previewUrl);
-  setShowCropper(true);
-};
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+    setShowCropper(true);
+  };
 
   const fadeInUp = {
-    hidden: { opacity: 0, y: 24 },
+    hidden: { opacity: 0, y: 16 },
     visible: (i = 0) => ({
       opacity: 1,
       y: 0,
-      transition: { delay: 0.08 * i, duration: 0.55, ease: "easeOut" },
+      transition: { delay: 0.06 * i, duration: 0.4, ease: "easeOut" },
     }),
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-linear-to-br from-slate-950 via-indigo-950 to-purple-900 text-white">
-      {/* Ambient animated orbs */}
-      <div className="pointer-events-none absolute inset-0">
-        <motion.div
-          className="absolute -left-24 -top-32 h-80 w-80 rounded-full bg-purple-500/25 blur-3xl"
-          animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.65, 0.4] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-[-120px] right-[-60px] h-96 w-96 rounded-full bg-indigo-400/20 blur-3xl"
-          animate={{ scale: [1.05, 0.95, 1.05], opacity: [0.45, 0.7, 0.45] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        />
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-950 via-[#0d0d1a] to-[#0a0a14] text-white">
+      {/* Ambient orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-32 -top-32 h-72 w-72 rounded-full bg-[#4F6EF7]/10 blur-3xl" />
+        <div className="absolute bottom-[-80px] right-[-40px] h-96 w-96 rounded-full bg-[#0FC8C8]/8 blur-3xl" />
       </div>
 
-      <main className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      <main className="relative flex min-h-screen items-center justify-center px-4 py-12">
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="flex w-full max-w-6xl overflow-hidden rounded-3xl bg-white/10 shadow-2xl shadow-purple-900/40 backdrop-blur-2xl ring-1 ring-white/10"
+          className="flex w-full max-w-5xl overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0F0F1A]/80 shadow-2xl shadow-black/60 backdrop-blur-2xl"
         >
-          {/* Left: Form */}
-          <div className="w-full max-w-xl space-y-7 p-8 md:w-1/2 md:p-12">
+          {/* ── Left: Form ── */}
+          <div className="flex w-full flex-col justify-center px-8 py-10 md:w-[52%] md:px-12">
+            {/* Logo */}
             <motion.div
+              variants={fadeInUp as any}
               initial="hidden"
               animate="visible"
-              variants={fadeInUp as any}
               custom={0}
-              className="space-y-2"
+              className="mb-7 flex items-center gap-2.5"
             >
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-purple-200 ring-1 ring-white/10">
-                Sign Up
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-[9px]"
+                style={{ background: "linear-gradient(135deg, #4F6EF7, #0FC8C8)", boxShadow: "0 0 14px rgba(79,110,247,0.4)" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <span className="font-display text-[1.05rem] font-bold tracking-tight text-slate-100">
+                Talky<span style={{ color: "#0FC8C8" }}>Talky</span>
               </span>
-              <h1 className="text-4xl font-black leading-tight text-white md:text-5xl">
-                Create your account 
+            </motion.div>
+
+            {/* Heading */}
+            <motion.div
+              variants={fadeInUp as any}
+              initial="hidden"
+              animate="visible"
+              custom={1}
+              className="mb-6 space-y-1.5"
+            >
+              <h1 className="font-display text-[1.75rem] font-bold leading-tight text-white md:text-[2rem]">
+                Create your account
               </h1>
-              <p className="text-sm text-slate-200/80">
-                Join the conversation with a secure, beautifully fast experience.
+              <p className="text-sm text-slate-400">
+                Join TalkyTalky and start connecting instantly.
               </p>
             </motion.div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              {/* Google button */}
               <motion.button
                 type="button"
                 variants={fadeInUp as any}
                 initial="hidden"
                 animate="visible"
-                custom={1}
-                whileHover={{
-                  scale: 1.02,
-                  boxShadow: "0 18px 40px rgba(168, 85, 247, 0.35)",
-                }}
-                whileTap={{ scale: 0.98 }}
-                className="group relative flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-400 px-4 text-sm font-semibold text-white shadow-lg"
+                custom={2}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-slate-300 transition hover:border-white/20 hover:bg-white/10"
               >
                 <IconBrandGoogle className="h-4 w-4" />
                 <span>Continue with Google</span>
-                <span className="absolute inset-0 rounded-full bg-white/0 transition group-hover:bg-white/10" />
               </motion.button>
 
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/8" />
+                <span className="text-xs font-medium text-slate-500">or</span>
+                <div className="h-px flex-1 bg-white/8" />
+              </div>
+
+              {/* Profile image upload */}
               <motion.div
                 variants={fadeInUp as any}
                 initial="hidden"
                 animate="visible"
-                custom={2}
-                className="flex items-center gap-3 text-slate-300/70"
+                custom={3}
+                className="flex justify-center"
               >
-                <div className="h-px flex-1 bg-white/15" />
-                <span className="text-xs font-semibold">OR</span>
-                <div className="h-px flex-1 bg-white/15" />
+                <label
+                  htmlFor="profile-image-upload"
+                  className="group relative cursor-pointer"
+                  aria-label="Upload profile photo"
+                >
+                  <div
+                    className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed transition"
+                    style={{
+                      borderColor: imagePreview && !showCropper ? "#4F6EF7" : "rgba(79,110,247,0.35)",
+                      background: "rgba(79,110,247,0.06)",
+                    }}
+                  >
+                    {imagePreview && !showCropper ? (
+                      <img
+                        src={imagePreview}
+                        alt="Profile preview"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-slate-500 group-hover:text-slate-300 transition">
+                        <IconCamera className="h-6 w-6" />
+                        <span className="text-[10px] font-medium">Photo</span>
+                      </div>
+                    )}
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition group-hover:opacity-100">
+                      <IconCamera className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                  <input
+                    id="profile-image-upload"
+                    className="hidden"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </label>
               </motion.div>
 
               <motion.div
                 variants={fadeInUp as any}
                 initial="hidden"
                 animate="visible"
-                custom={3}
-                className="space-y-4"
+                custom={4}
+                className="space-y-3"
               >
-                <LabelInputContainer>
-<div className="space-y-3">
-  <input
-    className="cursor-pointer"
-    type="file"
-    accept="image/*"
-    onChange={handleImageChange}
-  />
-
-  {image && imagePreview && !showCropper && (
-    <div className="flex items-center gap-3">
-      <img
-        src={imagePreview}
-        alt="Profile preview"
-        className="h-16 w-16 rounded-full object-cover ring-2 ring-purple-400"
-      />
-
-      <p className="text-sm text-slate-300">
-        Profile image selected
-      </p>
-    </div>
-  )}
-</div>     
-            
-                </LabelInputContainer>
+                {/* Name */}
                 <LabelInputContainer>
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Full Name"
+                    placeholder="Full name"
                     value={form.name}
                     onChange={handleChange}
-                    className="rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-300/60 shadow-sm transition focus:border-purple-400 focus:ring-purple-400"
+                    className={cn(
+                      "h-10 rounded-xl border bg-[#14141F] px-3.5 text-sm text-white placeholder:text-slate-500 transition focus:outline-none",
+                      errors.name
+                        ? "border-red-500/60 focus:border-red-500"
+                        : "border-white/10 focus:border-[#4F6EF7]/60"
+                    )}
                   />
                   <AnimatePresence>
                     {errors.name && (
@@ -330,22 +328,28 @@ const handleCropImage = async () => {
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
-                        className="text-xs text-rose-300"
+                        className="flex items-center gap-1 text-xs text-red-400"
                       >
-                        {errors.name}
+                        <span>⚠</span> {errors.name}
                       </motion.p>
                     )}
                   </AnimatePresence>
                 </LabelInputContainer>
 
+                {/* Email */}
                 <LabelInputContainer>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Email"
+                    placeholder="Email address"
                     value={form.email}
                     onChange={handleChange}
-                    className="rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-300/60 shadow-sm transition focus:border-purple-400 focus:ring-purple-400"
+                    className={cn(
+                      "h-10 rounded-xl border bg-[#14141F] px-3.5 text-sm text-white placeholder:text-slate-500 transition focus:outline-none",
+                      errors.email
+                        ? "border-red-500/60 focus:border-red-500"
+                        : "border-white/10 focus:border-[#4F6EF7]/60"
+                    )}
                   />
                   <AnimatePresence>
                     {errors.email && (
@@ -353,207 +357,243 @@ const handleCropImage = async () => {
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
-                        className="text-xs text-rose-300"
+                        className="flex items-center gap-1 text-xs text-red-400"
                       >
-                        {errors.email}
+                        <span>⚠</span> {errors.email}
                       </motion.p>
                     )}
                   </AnimatePresence>
                 </LabelInputContainer>
 
+                {/* Password */}
                 <LabelInputContainer>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Password"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-300/60 shadow-sm transition focus:border-purple-400 focus:ring-purple-400"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Password"
+                      value={form.password}
+                      onChange={handleChange}
+                      className={cn(
+                        "h-10 rounded-xl border bg-[#14141F] px-3.5 pr-10 text-sm text-white placeholder:text-slate-500 transition focus:outline-none",
+                        errors.password
+                          ? "border-red-500/60 focus:border-red-500"
+                          : "border-white/10 focus:border-[#4F6EF7]/60"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-200"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <AnimatePresence>
                     {errors.password && (
                       <motion.p
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
-                        className="text-xs text-rose-300"
+                        className="flex items-center gap-1 text-xs text-red-400"
                       >
-                        {errors.password}
+                        <span>⚠</span> {errors.password}
                       </motion.p>
                     )}
                   </AnimatePresence>
                 </LabelInputContainer>
 
+                {/* Confirm Password */}
                 <LabelInputContainer>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Confirm Password"
-                    value={form.confirmPassword}
-                    onChange={handleChange}
-                    className="rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-300/60 shadow-sm transition focus:border-purple-400 focus:ring-purple-400"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm password"
+                      value={form.confirmPassword}
+                      onChange={handleChange}
+                      className={cn(
+                        "h-10 rounded-xl border bg-[#14141F] px-3.5 pr-10 text-sm text-white placeholder:text-slate-500 transition focus:outline-none",
+                        errors.confirmPassword
+                          ? "border-red-500/60 focus:border-red-500"
+                          : "border-white/10 focus:border-[#4F6EF7]/60"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-200"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <AnimatePresence>
                     {errors.confirmPassword && (
                       <motion.p
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
-                        className="text-xs text-rose-300"
+                        className="flex items-center gap-1 text-xs text-red-400"
                       >
-                        {errors.confirmPassword}
+                        <span>⚠</span> {errors.confirmPassword}
                       </motion.p>
                     )}
                   </AnimatePresence>
                 </LabelInputContainer>
               </motion.div>
 
+              {/* Submit */}
               <motion.button
                 variants={fadeInUp as any}
                 initial="hidden"
                 animate="visible"
-                custom={4}
-                whileHover={{
-                  scale: 1.015,
-                  boxShadow: "0 20px 45px rgba(79, 70, 229, 0.35)",
-                }}
-                whileTap={{ scale: 0.985 }}
-                className="relative mt-2 inline-flex h-11 w-full items-center justify-center overflow-hidden rounded-full bg-indigo-500 px-6 text-sm font-semibold text-white shadow-xl transition"
+                custom={5}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
                 type="submit"
+                disabled={isLoading}
+                className="mt-1 flex h-10 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition disabled:opacity-60"
+                style={{ background: "linear-gradient(135deg, #4F6EF7, #3B56D4)", boxShadow: "0 4px 20px rgba(79,110,247,0.3)" }}
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 opacity-80 cursor-pointer" />
-                <span className="relative cursor-pointer">Create Account</span>
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                    </svg>
+                    Creating account…
+                  </span>
+                ) : (
+                  "Create account"
+                )}
               </motion.button>
             </form>
 
-            <motion.div
-              variants={fadeInUp as any}
-              initial="hidden"
-              animate="visible"
-              custom={5}
-              className="flex items-center justify-between text-sm text-slate-200/80"
-            >
+            <p className="mt-5 text-center text-sm text-slate-400">
+              Already have an account?{" "}
               <a
                 href="/sign-in"
-                className="transition hover:text-white hover:underline"
+                className="font-semibold text-[#4F6EF7] transition hover:text-[#7c9ffd]"
               >
-                Already have an account? Log In
+                Sign in
               </a>
-             
-            </motion.div>
+            </p>
           </div>
 
-          {/* Right: Illustration */}
+          {/* ── Right: Illustration ── */}
           <motion.div
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-            className="relative hidden w-1/2 items-center justify-center bg-gradient-to-br from-indigo-700 via-purple-700 to-slate-900 p-10 md:flex"
+            className="relative hidden flex-col items-center justify-center overflow-hidden bg-[#080810] md:flex md:w-[48%]"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_28%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.07),transparent_25%),radial-gradient(circle_at_50%_70%,rgba(255,255,255,0.06),transparent_30%)]" />
-            <motion.img
-              src={chatImage}
-              alt="Chat"
-              className="relative z-10 w-full max-w-md drop-shadow-2xl"
-              initial={{ scale: 0.94, rotate: -2 }}
-              animate={{ scale: 1, rotate: 0, y: [0, -8, 0] }}
-              transition={{
-                duration: 4.5,
-                ease: "easeInOut",
-                repeat: Infinity,
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(79,110,247,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(79,110,247,0.04) 1px, transparent 1px)",
+                backgroundSize: "40px 40px",
               }}
             />
-            <motion.div
-              className="absolute bottom-8 right-8 z-10 rounded-2xl bg-white/10 px-4 py-3 text-xs text-white backdrop-blur"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#4F6EF7]/10 via-transparent to-[#0FC8C8]/8" />
+            <motion.img
+              src={chatImage}
+              alt="Chat illustration"
+              className="relative z-10 w-full max-w-[320px] drop-shadow-2xl"
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div
+              className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/10 px-4 py-2 text-xs font-medium text-slate-400 backdrop-blur-sm"
+              style={{ background: "rgba(15,15,26,0.8)" }}
             >
-              Seamless onboarding. Instant sync. Welcome aboard.
-            </motion.div>
+              Seamless onboarding · Instant sync · Welcome aboard
+            </div>
           </motion.div>
         </motion.div>
       </main>
+
+      {/* Image crop modal */}
       <AnimatePresence>
-  {showCropper && imagePreview && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-    >
-      <motion.div
-        initial={{ scale: 0.95, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.95, y: 20 }}
-        className="w-full max-w-xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"
-      >
-        <h2 className="mb-2 text-xl font-bold text-white">
-          Crop Profile Image
-        </h2>
-
-        <p className="mb-5 text-sm text-slate-400">
-          Adjust your profile picture before creating your account.
-        </p>
-
-        <div className="relative h-[350px] w-full overflow-hidden rounded-2xl bg-black">
-          <Cropper
-            image={imagePreview}
-            crop={crop}
-            zoom={zoom}
-            aspect={1}
-            cropShape="rect"
-            showGrid={false}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropComplete}
-          />
-        </div>
-
-        <div className="mt-5">
-          <div className="mb-2 flex justify-between text-sm text-slate-300">
-            <span>Zoom</span>
-            <span>{zoom.toFixed(1)}x</span>
-          </div>
-
-          <input
-            type="range"
-            min={1}
-            max={1}
-            step={0.1}
-            value={zoom}
-            onChange={(e) =>
-              setZoom(Number(e.target.value))
-            }
-            className="w-full cursor-pointer"
-          />
-        </div>
-
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setShowCropper(false);
-              setImagePreview(null);
-            }}
-            className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
+        {showCropper && imagePreview && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
           >
-            Cancel
-          </button>
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0F0F1A] p-6 shadow-2xl"
+            >
+              <h2 className="mb-1 text-lg font-bold text-white">Crop your photo</h2>
+              <p className="mb-5 text-sm text-slate-400">
+                Adjust and crop your profile picture.
+              </p>
 
-          <button
-            type="button"
-            onClick={handleCropImage}
-            className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:scale-105"
-          >
-            Crop & Continue
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence> 
-      <ToastContainer />
+              <div className="relative h-72 w-full overflow-hidden rounded-xl bg-black">
+                <Cropper
+                  image={imagePreview}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  cropShape="rect"
+                  showGrid={false}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                />
+              </div>
+
+              <div className="mt-4">
+                <div className="mb-1.5 flex justify-between text-xs text-slate-400">
+                  <span>Zoom</span>
+                  <span>{zoom.toFixed(1)}×</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={1}
+                  step={0.1}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="w-full cursor-pointer accent-[#4F6EF7]"
+                />
+              </div>
+
+              <div className="mt-5 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCropper(false);
+                    setImagePreview(null);
+                  }}
+                  className="rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCropImage}
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                  style={{ background: "linear-gradient(135deg, #4F6EF7, #3B56D4)" }}
+                >
+                  Crop & save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        toastStyle={{ background: "#14141F", color: "#E2E8F0", border: "1px solid rgba(79,110,247,0.2)" }}
+      />
     </div>
   );
 }
