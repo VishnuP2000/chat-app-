@@ -1,13 +1,14 @@
 import mongoose, { Schema, Types, Document } from "mongoose";
+import { IMessage } from "./message.modal";
 
 export interface IChat extends Document {
   users: Types.ObjectId[];
   participantsKey: string;
-  lastMessage?: Types.ObjectId;
+  lastMessage?: Types.ObjectId| IMessage;
   unreadCounts?: Map<string, number> | Record<string, number>;
   createdAt?: Date;
   updatedAt?: Date;
-  messages?: Types.ObjectId[];
+  messages?: Types.ObjectId[]|IMessage[];
 }
 
 const chatSchema = new Schema<IChat>(

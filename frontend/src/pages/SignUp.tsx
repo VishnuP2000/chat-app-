@@ -5,7 +5,6 @@ import { Input } from "../components/ui/input";
 import { cn } from "@/lib/utils";
 import { IconBrandGoogle, IconEye, IconEyeOff, IconCamera } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
-import chatImage from "../assets/chat.png";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion, AnimatePresence } from "framer-motion";
@@ -144,7 +143,6 @@ function SignUpPage(): JSX.Element {
           setImage(croppedFile);
           setImagePreview(URL.createObjectURL(croppedFile));
           setShowCropper(false);
-          toast.success("Image cropped successfully");
         },
         "image/jpeg",
         0.95
@@ -177,340 +175,390 @@ function SignUpPage(): JSX.Element {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-950 via-[#0d0d1a] to-[#0a0a14] text-white">
-      {/* Ambient orbs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-32 -top-32 h-72 w-72 rounded-full bg-[#4F6EF7]/10 blur-3xl" />
-        <div className="absolute bottom-[-80px] right-[-40px] h-96 w-96 rounded-full bg-[#0FC8C8]/8 blur-3xl" />
-      </div>
-
-      <main className="relative flex min-h-screen items-center justify-center px-4 py-12">
+    <div 
+      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden font-sans"
+      style={{
+        background: `
+          radial-gradient(circle at top right, rgba(35, 83, 71, 0.22), transparent 45%),
+          radial-gradient(circle at bottom left, rgba(142, 182, 155, 0.08), transparent 40%),
+          #051F20
+        `
+      }}
+    >
+      <main className="relative flex w-full flex-col items-center justify-center px-4 py-8 md:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="flex w-full max-w-5xl overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0F0F1A]/80 shadow-2xl shadow-black/60 backdrop-blur-2xl"
+          className="w-full max-w-[460px] rounded-[18px] p-6 md:p-9 shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
+          style={{
+            background: "#0B2B26",
+            border: "1px solid rgba(142, 182, 155, 0.12)",
+            width: "calc(100% - 2rem)"
+          }}
         >
-          {/* ── Left: Form ── */}
-          <div className="flex w-full flex-col justify-center px-8 py-10 md:w-[52%] md:px-12">
-            {/* Logo */}
-            <motion.div
-              variants={fadeInUp as any}
-              initial="hidden"
-              animate="visible"
-              custom={0}
-              className="mb-7 flex items-center gap-2.5"
-            >
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-[9px]"
-                style={{ background: "linear-gradient(135deg, #4F6EF7, #0FC8C8)", boxShadow: "0 0 14px rgba(79,110,247,0.4)" }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              </div>
-              <span className="font-display text-[1.05rem] font-bold tracking-tight text-slate-100">
-                Talky<span style={{ color: "#0FC8C8" }}>Talky</span>
-              </span>
-            </motion.div>
-
-            {/* Heading */}
-            <motion.div
-              variants={fadeInUp as any}
-              initial="hidden"
-              animate="visible"
-              custom={1}
-              className="mb-6 space-y-1.5"
-            >
-              <h1 className="font-display text-[1.75rem] font-bold leading-tight text-white md:text-[2rem]">
-                Create your account
-              </h1>
-              <p className="text-sm text-slate-400">
-                Join TalkyTalky and start connecting instantly.
-              </p>
-            </motion.div>
-
-            <form onSubmit={handleSubmit} className="space-y-3.5">
-              {/* Google button */}
-              <motion.button
-                type="button"
-                variants={fadeInUp as any}
-                initial="hidden"
-                animate="visible"
-                custom={2}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-slate-300 transition hover:border-white/20 hover:bg-white/10"
-              >
-                <IconBrandGoogle className="h-4 w-4" />
-                <span>Continue with Google</span>
-              </motion.button>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/8" />
-                <span className="text-xs font-medium text-slate-500">or</span>
-                <div className="h-px flex-1 bg-white/8" />
-              </div>
-
-              {/* Profile image upload */}
-              <motion.div
-                variants={fadeInUp as any}
-                initial="hidden"
-                animate="visible"
-                custom={3}
-                className="flex justify-center"
-              >
-                <label
-                  htmlFor="profile-image-upload"
-                  className="group relative cursor-pointer"
-                  aria-label="Upload profile photo"
-                >
-                  <div
-                    className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed transition"
-                    style={{
-                      borderColor: imagePreview && !showCropper ? "#4F6EF7" : "rgba(79,110,247,0.35)",
-                      background: "rgba(79,110,247,0.06)",
-                    }}
-                  >
-                    {imagePreview && !showCropper ? (
-                      <img
-                        src={imagePreview}
-                        alt="Profile preview"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-1 text-slate-500 group-hover:text-slate-300 transition">
-                        <IconCamera className="h-6 w-6" />
-                        <span className="text-[10px] font-medium">Photo</span>
-                      </div>
-                    )}
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition group-hover:opacity-100">
-                      <IconCamera className="h-5 w-5 text-white" />
-                    </div>
-                  </div>
-                  <input
-                    id="profile-image-upload"
-                    className="hidden"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </label>
-              </motion.div>
-
-              <motion.div
-                variants={fadeInUp as any}
-                initial="hidden"
-                animate="visible"
-                custom={4}
-                className="space-y-3"
-              >
-                {/* Name */}
-                <LabelInputContainer>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Full name"
-                    value={form.name}
-                    onChange={handleChange}
-                    className={cn(
-                      "h-10 rounded-xl border bg-[#14141F] px-3.5 text-sm text-white placeholder:text-slate-500 transition focus:outline-none",
-                      errors.name
-                        ? "border-red-500/60 focus:border-red-500"
-                        : "border-white/10 focus:border-[#4F6EF7]/60"
-                    )}
-                  />
-                  <AnimatePresence>
-                    {errors.name && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="flex items-center gap-1 text-xs text-red-400"
-                      >
-                        <span>⚠</span> {errors.name}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </LabelInputContainer>
-
-                {/* Email */}
-                <LabelInputContainer>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Email address"
-                    value={form.email}
-                    onChange={handleChange}
-                    className={cn(
-                      "h-10 rounded-xl border bg-[#14141F] px-3.5 text-sm text-white placeholder:text-slate-500 transition focus:outline-none",
-                      errors.email
-                        ? "border-red-500/60 focus:border-red-500"
-                        : "border-white/10 focus:border-[#4F6EF7]/60"
-                    )}
-                  />
-                  <AnimatePresence>
-                    {errors.email && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="flex items-center gap-1 text-xs text-red-400"
-                      >
-                        <span>⚠</span> {errors.email}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </LabelInputContainer>
-
-                {/* Password */}
-                <LabelInputContainer>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Password"
-                      value={form.password}
-                      onChange={handleChange}
-                      className={cn(
-                        "h-10 rounded-xl border bg-[#14141F] px-3.5 pr-10 text-sm text-white placeholder:text-slate-500 transition focus:outline-none",
-                        errors.password
-                          ? "border-red-500/60 focus:border-red-500"
-                          : "border-white/10 focus:border-[#4F6EF7]/60"
-                      )}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-200"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  <AnimatePresence>
-                    {errors.password && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="flex items-center gap-1 text-xs text-red-400"
-                      >
-                        <span>⚠</span> {errors.password}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </LabelInputContainer>
-
-                {/* Confirm Password */}
-                <LabelInputContainer>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm password"
-                      value={form.confirmPassword}
-                      onChange={handleChange}
-                      className={cn(
-                        "h-10 rounded-xl border bg-[#14141F] px-3.5 pr-10 text-sm text-white placeholder:text-slate-500 transition focus:outline-none",
-                        errors.confirmPassword
-                          ? "border-red-500/60 focus:border-red-500"
-                          : "border-white/10 focus:border-[#4F6EF7]/60"
-                      )}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-200"
-                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                    >
-                      {showConfirmPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  <AnimatePresence>
-                    {errors.confirmPassword && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="flex items-center gap-1 text-xs text-red-400"
-                      >
-                        <span>⚠</span> {errors.confirmPassword}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </LabelInputContainer>
-              </motion.div>
-
-              {/* Submit */}
-              <motion.button
-                variants={fadeInUp as any}
-                initial="hidden"
-                animate="visible"
-                custom={5}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                type="submit"
-                disabled={isLoading}
-                className="mt-1 flex h-10 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition disabled:opacity-60"
-                style={{ background: "linear-gradient(135deg, #4F6EF7, #3B56D4)", boxShadow: "0 4px 20px rgba(79,110,247,0.3)" }}
-              >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                    </svg>
-                    Creating account…
-                  </span>
-                ) : (
-                  "Create account"
-                )}
-              </motion.button>
-            </form>
-
-            <p className="mt-5 text-center text-sm text-slate-400">
-              Already have an account?{" "}
-              <a
-                href="/sign-in"
-                className="font-semibold text-[#4F6EF7] transition hover:text-[#7c9ffd]"
-              >
-                Sign in
-              </a>
-            </p>
-          </div>
-
-          {/* ── Right: Illustration ── */}
+          {/* Logo mark */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-            className="relative hidden flex-col items-center justify-center overflow-hidden bg-[#080810] md:flex md:w-[48%]"
+            variants={fadeInUp as any}
+            initial="hidden"
+            animate="visible"
+            custom={0}
+            className="mb-6 flex items-center gap-2.5 justify-center"
           >
             <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage:
-                  "linear-gradient(rgba(79,110,247,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(79,110,247,0.04) 1px, transparent 1px)",
-                backgroundSize: "40px 40px",
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-[#4F6EF7]/10 via-transparent to-[#0FC8C8]/8" />
-            <motion.img
-              src={chatImage}
-              alt="Chat illustration"
-              className="relative z-10 w-full max-w-[320px] drop-shadow-2xl"
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <div
-              className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/10 px-4 py-2 text-xs font-medium text-slate-400 backdrop-blur-sm"
-              style={{ background: "rgba(15,15,26,0.8)" }}
+              className="flex h-8 w-8 items-center justify-center rounded-[9px]"
+              style={{ background: "#235347", boxShadow: "0 4px 12px rgba(35, 83, 71, 0.4)" }}
             >
-              Seamless onboarding · Instant sync · Welcome aboard
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DAF1DE" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
             </div>
+            <span className="font-display text-xl font-bold tracking-tight text-[#DAF1DE]">
+              Talky<span style={{ color: "#8EB69B" }}>Talky</span>
+            </span>
           </motion.div>
+
+          {/* Heading */}
+          <motion.div
+            variants={fadeInUp as any}
+            initial="hidden"
+            animate="visible"
+            custom={1}
+            className="mb-8 text-center space-y-1.5"
+          >
+            <h1 className="font-display font-bold leading-tight text-[#DAF1DE]" style={{ fontSize: "clamp(1.8rem, 3vw, 2.3rem)" }}>
+              Create an account
+            </h1>
+            <p className="text-sm" style={{ color: "rgba(142, 182, 155, 0.75)" }}>
+              Join TalkyTalky and start connecting instantly.
+            </p>
+          </motion.div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Google button */}
+            <motion.button
+              type="button"
+              variants={fadeInUp as any}
+              initial="hidden"
+              animate="visible"
+              custom={2}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="flex h-[48px] w-full items-center justify-center gap-2 rounded-xl text-sm font-medium transition"
+              style={{
+                background: "rgba(142, 182, 155, 0.05)",
+                border: "1px solid rgba(142, 182, 155, 0.16)",
+                color: "#DAF1DE"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "#8EB69B";
+                e.currentTarget.style.background = "rgba(142, 182, 155, 0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(142, 182, 155, 0.16)";
+                e.currentTarget.style.background = "rgba(142, 182, 155, 0.05)";
+              }}
+            >
+              <IconBrandGoogle className="h-4 w-4" />
+              <span>Continue with Google</span>
+            </motion.button>
+
+            {/* Divider */}
+            <motion.div
+              variants={fadeInUp as any}
+              initial="hidden"
+              animate="visible"
+              custom={3}
+              className="flex items-center gap-3 py-1"
+            >
+              <div className="h-px flex-1" style={{ background: "rgba(142, 182, 155, 0.12)" }} />
+              <span className="text-xs font-medium" style={{ color: "rgba(142, 182, 155, 0.55)" }}>or</span>
+              <div className="h-px flex-1" style={{ background: "rgba(142, 182, 155, 0.12)" }} />
+            </motion.div>
+
+            {/* Profile image upload */}
+            <motion.div
+              variants={fadeInUp as any}
+              initial="hidden"
+              animate="visible"
+              custom={3}
+              className="flex justify-center mb-2"
+            >
+              <label
+                htmlFor="profile-image-upload"
+                className="group relative cursor-pointer"
+                aria-label="Upload profile photo"
+              >
+                <div
+                  className="relative flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-dashed transition-all"
+                  style={{
+                    borderColor: imagePreview && !showCropper ? "#8EB69B" : "rgba(142, 182, 155, 0.35)",
+                    background: "rgba(142, 182, 155, 0.06)",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#8EB69B")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = imagePreview && !showCropper ? "#8EB69B" : "rgba(142, 182, 155, 0.35)")}
+                >
+                  {imagePreview && !showCropper ? (
+                    <img
+                      src={imagePreview}
+                      alt="Profile preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 transition" style={{ color: "rgba(142, 182, 155, 0.6)" }}>
+                      <IconCamera className="h-5 w-5 " />
+                      <span className="text-[10px] font-medium">Photo</span>
+                    </div>
+                  )}
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 transition group-hover:opacity-100" style={{ background: "rgba(5, 31, 32, 0.5)" }}>
+                    <IconCamera className="h-5 w-5" style={{ color: "#DAF1DE" }} />
+                  </div>
+                </div>
+                <input
+                  id="profile-image-upload"
+                  className="hidden"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </label>
+            </motion.div>
+
+            <motion.div
+              variants={fadeInUp as any}
+              initial="hidden"
+              animate="visible"
+              custom={4}
+              className="space-y-4"
+            >
+              {/* Name */}
+              <LabelInputContainer>
+                <label htmlFor="name" className="text-sm font-medium pl-1" style={{ color: "#8EB69B" }}>
+                  Full name
+                </label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Enter name"
+                  value={form.name}
+                  onChange={handleChange}
+                  style={{
+                    background: "#051F20",
+                    border: errors.name ? "1px solid #e67a7a" : "1px solid rgba(142, 182, 155, 0.16)",
+                    color: "#DAF1DE",
+                    height: "48px",
+                    boxShadow: "none",
+                  }}
+                  className="rounded-[10px] px-4 text-sm transition-all focus:outline-none placeholder-[rgba(142,182,155,0.5)] focus:border-[#8EB69B] focus:ring-[3px] focus:ring-[rgba(142,182,155,0.08)]"
+                />
+                <AnimatePresence>
+                  {errors.name && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      className="flex items-center gap-1 text-xs mt-1 pl-1"
+                      style={{ color: "#e67a7a" }}
+                    >
+                      <span>⚠</span> {errors.name}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </LabelInputContainer>
+
+              {/* Email */}
+              <LabelInputContainer>
+                <label htmlFor="email" className="text-sm font-medium pl-1" style={{ color: "#8EB69B" }}>
+                  Email address
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter email"
+                  value={form.email}
+                  onChange={handleChange}
+                  style={{
+                    background: "#051F20",
+                    border: errors.email ? "1px solid #e67a7a" : "1px solid rgba(142, 182, 155, 0.16)",
+                    color: "#DAF1DE",
+                    height: "48px",
+                    boxShadow: "none",
+                  }}
+                  className="rounded-[10px] px-4 text-sm transition-all focus:outline-none placeholder-[rgba(142,182,155,0.5)] focus:border-[#8EB69B] focus:ring-[3px] focus:ring-[rgba(142,182,155,0.08)]"
+                />
+                <AnimatePresence>
+                  {errors.email && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      className="flex items-center gap-1 text-xs mt-1 pl-1"
+                      style={{ color: "#e67a7a" }}
+                    >
+                      <span>⚠</span> {errors.email}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </LabelInputContainer>
+
+              {/* Password */}
+              <LabelInputContainer>
+                <label htmlFor="password" className="text-sm font-medium pl-1" style={{ color: "#8EB69B" }}>
+                  Password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
+                    value={form.password}
+                    onChange={handleChange}
+                    style={{
+                      background: "#051F20",
+                      border: errors.password ? "1px solid #e67a7a" : "1px solid rgba(142, 182, 155, 0.16)",
+                      color: "#DAF1DE",
+                      height: "48px",
+                      boxShadow: "none",
+                    }}
+                    className="rounded-[10px] px-4 pr-11 text-sm transition-all focus:outline-none placeholder-[rgba(142,182,155,0.5)] focus:border-[#8EB69B] focus:ring-[3px] focus:ring-[rgba(142,182,155,0.08)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 transition"
+                    style={{ color: "#8EB69B" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#DAF1DE")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#8EB69B")}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {errors.password && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      className="flex items-center gap-1 text-xs mt-1 pl-1"
+                      style={{ color: "#e67a7a" }}
+                    >
+                      <span>⚠</span> {errors.password}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </LabelInputContainer>
+
+              {/* Confirm Password */}
+              <LabelInputContainer>
+                <label htmlFor="confirmPassword" className="text-sm font-medium pl-1" style={{ color: "#8EB69B" }}>
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={form.confirmPassword}
+                    onChange={handleChange}
+                    style={{
+                      background: "#051F20",
+                      border: errors.confirmPassword ? "1px solid #e67a7a" : "1px solid rgba(142, 182, 155, 0.16)",
+                      color: "#DAF1DE",
+                      height: "48px",
+                      boxShadow: "none",
+                    }}
+                    className="rounded-[10px] px-4 pr-11 text-sm transition-all focus:outline-none placeholder-[rgba(142,182,155,0.5)] focus:border-[#8EB69B] focus:ring-[3px] focus:ring-[rgba(142,182,155,0.08)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 transition"
+                    style={{ color: "#8EB69B" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#DAF1DE")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#8EB69B")}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {errors.confirmPassword && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      className="flex items-center gap-1 text-xs mt-1 pl-1"
+                      style={{ color: "#e67a7a" }}
+                    >
+                      <span>⚠</span> {errors.confirmPassword}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </LabelInputContainer>
+            </motion.div>
+
+            {/* Submit */}
+            <motion.button
+              variants={fadeInUp as any}
+              initial="hidden"
+              animate="visible"
+              custom={5}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={isLoading}
+              className=" cursor-pointer relative mt-2 flex h-[50px] w-full items-center justify-center overflow-hidden rounded-[10px] text-[15px] font-semibold transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+              style={{ 
+                background: "linear-gradient(135deg, #8EB69B, #235347)", 
+                color: "#051F20"
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(142, 182, 155, 0.2)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }
+              }}
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2 cursor-pointer">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5 ">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                  Creating account…
+                </span>
+              ) : (
+                "Create account"
+              )}
+            </motion.button>
+          </form>
+
+          {/* Sign in link */}
+          <motion.p
+            variants={fadeInUp as any}
+            initial="hidden"
+            animate="visible"
+            custom={6}
+            className="mt-6 text-center text-sm"
+            style={{ color: "rgba(142, 182, 155, 0.7)" }}
+          >
+            Already have an account?{" "}
+            <a
+              href="/sign-in"
+              className="font-semibold transition"
+              style={{ color: "#8EB69B" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#DAF1DE")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#8EB69B")}
+            >
+              Sign in
+            </a>
+          </motion.p>
         </motion.div>
       </main>
 
@@ -521,20 +569,25 @@ function SignUpPage(): JSX.Element {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            style={{ background: "rgba(5, 31, 32, 0.85)" }}
           >
             <motion.div
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0F0F1A] p-6 shadow-2xl"
+              className="w-full max-w-md rounded-[18px] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+              style={{
+                background: "#0B2B26",
+                border: "1px solid rgba(142, 182, 155, 0.12)"
+              }}
             >
-              <h2 className="mb-1 text-lg font-bold text-white">Crop your photo</h2>
-              <p className="mb-5 text-sm text-slate-400">
+              <h2 className="mb-1 text-lg font-bold" style={{ color: "#DAF1DE" }}>Crop your photo</h2>
+              <p className="mb-5 text-sm" style={{ color: "rgba(142, 182, 155, 0.75)" }}>
                 Adjust and crop your profile picture.
               </p>
 
-              <div className="relative h-72 w-full overflow-hidden rounded-xl bg-black">
+              <div className="relative h-72 w-full overflow-hidden rounded-xl" style={{ background: "#051F20" }}>
                 <Cropper
                   image={imagePreview}
                   crop={crop}
@@ -549,37 +602,48 @@ function SignUpPage(): JSX.Element {
               </div>
 
               <div className="mt-4">
-                <div className="mb-1.5 flex justify-between text-xs text-slate-400">
+                <div className="mb-1.5 flex justify-between text-xs font-medium" style={{ color: "#8EB69B" }}>
                   <span>Zoom</span>
                   <span>{zoom.toFixed(1)}×</span>
                 </div>
                 <input
                   type="range"
                   min={1}
-                  max={1}
+                  max={3}
                   step={0.1}
                   value={zoom}
                   onChange={(e) => setZoom(Number(e.target.value))}
-                  className="w-full cursor-pointer accent-[#4F6EF7]"
+                  className="w-full cursor-pointer"
+                  style={{ accentColor: "#8EB69B" }}
                 />
               </div>
 
-              <div className="mt-5 flex justify-end gap-3">
+              <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCropper(false);
                     setImagePreview(null);
                   }}
-                  className="rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10"
+                  className=" cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition"
+                  style={{ 
+                    border: "1px solid rgba(142, 182, 155, 0.16)",
+                    color: "#DAF1DE",
+                    background: "transparent"
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(142, 182, 155, 0.08)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleCropImage}
-                  className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                  style={{ background: "linear-gradient(135deg, #4F6EF7, #3B56D4)" }}
+                  className="cursor-pointer rounded-[10px] px-5 py-2 text-sm font-semibold transition-all hover:opacity-90 shadow-[0_4px_12px_rgba(142,182,155,0.15)]"
+                  style={{ 
+                    background: "linear-gradient(135deg, #8EB69B, #235347)", 
+                    color: "#051F20"
+                  }}
                 >
                   Crop & save
                 </button>
@@ -592,7 +656,13 @@ function SignUpPage(): JSX.Element {
       <ToastContainer
         position="top-right"
         autoClose={3000}
-        toastStyle={{ background: "#14141F", color: "#E2E8F0", border: "1px solid rgba(79,110,247,0.2)" }}
+        toastStyle={{ 
+          background: "#0B2B26", 
+          color: "#DAF1DE", 
+          border: "1px solid rgba(142, 182, 155, 0.14)",
+          borderRadius: "12px",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)"
+        }}
       />
     </div>
   );

@@ -1,15 +1,19 @@
 import { Server, Socket } from "socket.io";
 import { messageservice } from "../services/implementations/messages/messages.service";
+import { Types } from "mongoose";
+import { IMessage } from "../models/message.modal";
 
 // Map to track online users: userId -> Set of socketIds
 export const onlineUsers = new Map<string, Set<string>>();
-
+console.log('enter the registerSocketEvents')
 export const registerSocketEvents = (io: Server) => {
   io.on("connection", (socket: Socket) => {
     console.log(`✅ Socket connected: ${socket.id}`);
     
-    const currentUserId = (socket as any).userId;
+    const currentUserId = socket.data.userId as string;
+    console.log('currentUserId',currentUserId)
     if (!currentUserId) {
+            console.log("❌ No userId found");
         socket.disconnect();
         return;
     }
@@ -31,6 +35,7 @@ export const registerSocketEvents = (io: Server) => {
         socket.join(chatId);
         console.log(`🚪 Socket ${socket.id} joined room: ${chatId}`);
       }
+      
     });
 
     // leave-chat: User leaves a specific chat room
@@ -81,57 +86,94 @@ export const registerSocketEvents = (io: Server) => {
 
       console.log("✅ Message saved:", result);
 
-      const chat = result.data;
+ const chat = result.data;
 
-      if (!chat?.messages?.length) {
-        console.log("⚠️ No messages returned");
-        return;
-      }
+if (!chat?.messages?.length) {
+  console.log("⚠️ No messages returned");
+  return;
+}
 
-      const latestMessage =
-        chat.messages[chat.messages.length - 1];
 
-      console.log("📨 Latest message:", latestMessage);
+const latestMessage = chat.messages[chat.messages.length - 1];
 
-      socket
-        .to(chatId)
-        .emit("receive-message", latestMessage);
+if (latestMessage instanceof Types.ObjectId) {
+  console.log("❌ Message was not populated");
+  return;
+}
 
-      const receiverSockets = onlineUsers.get(receiverId);
+const message = latestMessage as IMessage;
 
-      if (receiverSockets) {
-        receiverSockets.forEach((socketId) => {
-          io.to(socketId).emit(
-            "new-message-notification",
-            {
-              chatId,
-              message: latestMessage,
-            }
-          );
-        });
-      }
+const socketMessage = {
+  id: message._id.toString(),
+  chatId: message.chatId.toString(),
+  content: message.content,
+  senderId: message.senderId,
+  timestamp: message.createdAt,
+};
 
-    } catch (error) {
-      console.error("❌ Error sending message:", error);
+console.log("📨 Emitting:", socketMessage);
 
-      socket.emit("error", {
-        message: "Failed to send message",
-      });
-    }
-  }
+io.to(chatId).emit(
+  "receive-message",
+  socketMessage
 );
 
+
+} catch (error) {
+  console.error("❌ Error sending message:", error);
+
+  socket.emit("error", {
+    message: "Failed to send message",
+  });
+}
+});
+  
     // typing: Alice is typing...
-    socket.on("typing", (data: { chatId: string }) => {
-      if (!currentUserId) return;
+    socket.on("typing_start", (data: { chatId: string }) => {
+      console.log('typing_start',data)
+  console.log("Chat ID:", data?.chatId);
+  console.log("Current user:", currentUserId);
+  console.log("Socket rooms:", [...socket.rooms]);
+        if (!currentUserId || !data?.chatId) {
+    console.log("❌ Invalid typing_start data");
+    return;
+  }
       socket.to(data.chatId).emit("typing", { chatId: data.chatId, userId: currentUserId });
     });
 
     // stop-typing: Alice stopped typing...
-    socket.on("stop-typing", (data: { chatId: string }) => {
-      if (!currentUserId) return;
+    socket.on("typing_stop", (data: { chatId: string }) => {
+       if (!currentUserId || !data?.chatId) {
+    console.log("❌ Invalid typing_stop data");
+    return;
+  }
       socket.to(data.chatId).emit("stop-typing", { chatId: data.chatId, userId: currentUserId });
     });
+
+//     socket.on("typing_start", (chatId: string) => {
+//   console.log("Typing started:", {
+    
+//     chatId,
+//     socketId: socket.id,
+//   });
+
+//   socket.to(chatId).emit("typing_start", {
+    
+//     chatId,
+//   });
+// });
+
+// socket.on("typing_stop", (chatId: string) => {
+//   console.log("Typing stopped:", {
+    
+//     chatId,
+//   });
+
+//   socket.to(chatId).emit("typing_stop", {
+    
+//     chatId,
+//   });
+// });
 
     // message-delivered: Bob received Alice's message
     socket.on("message-delivered", async (data: { chatId: string }) => {

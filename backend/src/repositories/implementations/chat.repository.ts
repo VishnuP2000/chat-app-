@@ -61,7 +61,7 @@ async findByChatId(id: Types.ObjectId): Promise<IChat | null> {
         select: "content senderId status createdAt",
         populate: {
           path: "senderId",
-          select: "name email _id",
+          select: "name email _id ",
         },
       })
     .populate({

@@ -207,7 +207,7 @@ function Home() {
                   className="btn-primary"
                   onClick={() => navigate("/sign-up")}
                 >
-                  Get Started <RiArrowRightLine />
+                  Sign-Up <RiArrowRightLine />
                 </button>
               </>
             )}

@@ -88,7 +88,7 @@ function Profile() {
           </button>
 
           {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div className="cursor-pointer" onClick={()=>navigate('/')} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <div
               style={{
                 width: 28,

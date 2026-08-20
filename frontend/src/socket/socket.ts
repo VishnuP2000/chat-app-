@@ -2,25 +2,37 @@ import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-export const getSocket = (): Socket => {
-  console.log('through backend url')
-  if (!socket) {
-    socket = io("http://localhost:5173", {  // your backend URL
-      withCredentials: true,
-      transports: ["websocket"],
-      autoConnect: false,   // ✅ don't connect until user logs in
-    });
+export const connectSocket = (token: string) => {
+  // Don't create multiple connections
+  if (socket?.connected) {
+    return socket;
   }
+
+  socket = io("http://localhost:4000", {
+    auth: {
+      token,
+    },
+    autoConnect: false,
+  });
+
+  socket.connect();
+console.log('before socket connected')
+  socket.on("connect", () => {
+    console.log("🟢 Socket connected:", socket?.id);
+  });
+
+  socket.on("connect_error", (error) => {
+    console.error("🔴 Socket connection error:", error.message);
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("🟡 Socket disconnected:", reason);
+  });
+
   return socket;
 };
 
-export const connectSocket = (token: string) => {
-  console.log('try to connect socket.io')
-  const s = getSocket();
-  s.auth = { token };       // ✅ pass JWT token for auth middleware
-  s.connect();
-  return s;
-};
+export const getSocket = () => socket;
 
 export const disconnectSocket = () => {
   if (socket) {
