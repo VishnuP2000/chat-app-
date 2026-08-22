@@ -118,6 +118,15 @@ io.to(chatId).emit(
   socketMessage
 );
 
+// Also emit directly to the receiver's connected sockets so they receive it
+// even if they haven't explicitly joined the chatId room yet.
+if (onlineUsers.has(receiverId)) {
+  const receiverSockets = onlineUsers.get(receiverId);
+  receiverSockets?.forEach((socketId) => {
+    io.to(socketId).emit("receive-message", socketMessage);
+  });
+}
+
 
 } catch (error) {
   console.error("❌ Error sending message:", error);

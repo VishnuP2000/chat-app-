@@ -32,7 +32,7 @@ import {
 import type { IChat, IMessage, IUser } from "@/types/chat";
 import { clickUser } from "@/service/Api/messageApi";
 import { io, type Socket } from "socket.io-client";
-import { connectSocket,disconnectSocket } from "../socket/socket";
+import { connectSocket, disconnectSocket } from "../socket/socket";
 import { useAuth } from "@/context/AuthContext";
 // import { getSocket } from "@/socket/socket";
 
@@ -53,7 +53,7 @@ interface IMessageSender {
 }
 interface UIMessage {
   id: string;
-  chatId?:string;
+  chatId?: string;
   content: string;
   sender: "me" | "other";
   senderId: IMessageSender;
@@ -181,10 +181,10 @@ const Dashboard = (): JSX.Element => {
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   console.log("selectedChat", selectedChat);
   const [messageInput, setMessageInput] = useState("");
-  console.log('messageInput',messageInput)
+  console.log("messageInput", messageInput);
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  console.log('isTyping',isTyping)
+  console.log("isTyping", isTyping);
 
   // Mobile sidebar visibility
   const [showSidebar, setShowSidebar] = useState(true);
@@ -216,54 +216,52 @@ const Dashboard = (): JSX.Element => {
   const [chattUser, setChattUser] = useState<Chat[]>([]);
   console.log("chattUser", chattUser);
 
+  //useEffect
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    console.log("enter the useEffect1");
 
-//useEffect
-useEffect(() => {
-  const token = localStorage.getItem("accessToken");
-  console.log('enter the useEffect1')
-  
+    if (!token) {
+      console.error("❌ No access token found");
+      return;
+    }
 
-  if (!token) {
-    console.error("❌ No access token found");
-    return;
-  }
+    const socket = connectSocket(token);
 
-  const socket = connectSocket(token);
+    const handleConnect = () => {
+      console.log("✅ Dashboard socket connected:", socket.id);
+      setSocketState(socket);
+    };
 
-  const handleConnect = () => {
-    console.log("✅ Dashboard socket connected:", socket.id);
-    setSocketState(socket);
-  };
+    const handleConnectError = (error: Error) => {
+      console.error("❌ Socket connection failed:", error.message);
+      setSocketState(null);
+    };
 
-  const handleConnectError = (error: Error) => {
-    console.error("❌ Socket connection failed:", error.message);
-    setSocketState(null);
-  };
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
 
-  socket.on("connect", handleConnect);
-  socket.on("connect_error", handleConnectError);
+    // Important: socket may already be connected
+    if (socket.connected) {
+      handleConnect();
+    }
 
-  // Important: socket may already be connected
-  if (socket.connected) {
-    handleConnect();
-  }
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
 
-  return () => {
-    socket.off("connect", handleConnect);
-    socket.off("connect_error", handleConnectError);
-
-    // Don't necessarily disconnect here if the socket
-    // should survive Dashboard re-renders/navigation.
-  };
-});
+      // Don't necessarily disconnect here if the socket
+      // should survive Dashboard re-renders/navigation.
+    };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-    console.log('enter the useEffec2')
+    console.log("enter the useEffec2");
   }, [messages, selectedChat]);
 
   useEffect(() => {
-    console.log('enter the useEffect3')
+    console.log("enter the useEffect3");
     const loadChats = async () => {
       try {
         const chats = await getAllChats();
@@ -278,94 +276,139 @@ useEffect(() => {
     loadChats();
   }, []);
 
-    useEffect(() => {
-  if (!socketState?.connected || !selectedChat) return;
-console.log('enter the useEffect4')
-  console.log("JOIN CHAT:", selectedChat);
+  useEffect(() => {
+    if (!socketState?.connected || !selectedChat) return;
+    console.log("enter the useEffect4");
+    console.log("JOIN CHAT:", selectedChat);
 
-  socketState.emit("join-chat", {
-    chatId: selectedChat,
-  });
-
-  return () => {
-    console.log("LEAVE CHAT:", selectedChat);
-
-    socketState.emit("leave-chat", {
+    socketState.emit("join-chat", {
       chatId: selectedChat,
     });
-  };
-}, [socketState, selectedChat]);
 
-  useEffect(() => { 
-  if (!socketState) return;
-  console.log('enter the useEffect5')
+    return () => {
+      console.log("LEAVE CHAT:", selectedChat);
 
-  const handleTypingStart = (data: {
-    userId: string;
-    chatId: string;
-  }) => {
-    console.log("OTHER USER TYPING:", data);
+      socketState.emit("leave-chat", {
+        chatId: selectedChat,
+      });
+    };
+  }, [socketState, selectedChat]);
 
-    if (data.chatId === selectedChat) {
-      console.log('data.chatId',data.chatId)
-      setIsTyping(true);
-    }
-  };
+  useEffect(() => {
+    if (!socketState) return;
+    console.log("enter the useEffect5");
 
-  const handleTypingStop = (data: {
-    userId: string;
-    chatId: string;
-  }) => {
-    console.log("OTHER USER STOPPED TYPING:", data);
+    const handleTypingStart = (data: { userId: string; chatId: string }) => {
+      console.log("OTHER USER TYPING:", data);
 
-    if (data.chatId === selectedChat) {
-      setIsTyping(false);
-    }
-  };
+      if (data.chatId === selectedChat) {
+        console.log("data.chatId", data.chatId);
+        setIsTyping(true);
+      }
+    };
 
-  socketState.on("typing", handleTypingStart);
-  socketState.on("stop-typing", handleTypingStop);
+    const handleTypingStop = (data: { userId: string; chatId: string }) => {
+      console.log("OTHER USER STOPPED TYPING:", data);
 
-  return () => {
-    socketState.off("typing", handleTypingStart);
-    socketState.off("stop-typing", handleTypingStop);
-  };
-}, [socketState, selectedChat]);
+      if (data.chatId === selectedChat) {
+        setIsTyping(false);
+      }
+    };
 
-const selectedChatRef = useRef<string | null>(null);
+    socketState.on("typing", handleTypingStart);
+    socketState.on("stop-typing", handleTypingStop);
 
-useEffect(() => {
-  selectedChatRef.current = selectedChat;
-}, [selectedChat]);
+    return () => {
+      socketState.off("typing", handleTypingStart);
+      socketState.off("stop-typing", handleTypingStop);
+    };
+  }, [socketState, selectedChat]);
 
-useEffect(() => {
-  if (!socketState) return;
+  const selectedChatRef = useRef<string | null>(null);
 
-  const handleReceiveMessage = (message: any) => {
-    if (message.chatId !== selectedChatRef.current) {
-      return;
-    }
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
 
-    setMessages((prev) => {
-      const exists = prev.some((msg) => msg.id === message.id);
-      if (exists) return prev;
-      return [...prev, {
-        id: message.id,
-        chatId: message.chatId,
-        content: message.content,
-        sender: message.senderId._id === user?.id ? "me" : "other",
-        senderId: message.senderId,
-        timestamp: message.timestamp,
-        avatar: message.senderId?.image,
-      }];
-    });
-  };
+  useEffect(() => {
+    if (!socketState) return;
 
-  socketState.on("receive-message", handleReceiveMessage);
-  return () => { socketState.off("receive-message", handleReceiveMessage); };
-}, [socketState, user?.id]);
+    const handleReceiveMessage = (message: any) => {
+      console.log("📥 Socket received message:", message);
+      const formattedTime = message.timestamp
+        ? new Date(message.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
 
+      setChattUser((prev) =>
+        prev.map((chat) =>
+          chat._id === message.chatId
+            ? {
+                ...chat,
+                lastMessage: message.content,
+                timestamp: formattedTime,
+              }
+            : chat,
+        ),
+      );
 
+      if (message.chatId !== selectedChatRef.current) {
+        console.log(
+          "📥 Message is for a different chat. Updated sidebar only.",
+        );
+        return;
+      }
+
+      setMessages((prev) => {
+        const currentUserId = localStorage.getItem("userId") || user?.id;
+        const isFromMe =
+          (message.senderId?._id || message.senderId) === currentUserId;
+
+        const exists = prev.some((msg) => {
+          if (msg.id === message.id) return true;
+          // If it's from me, check if we already added it optimistically (same content, sent recently)
+          if (
+            isFromMe &&
+            msg.sender === "me" &&
+            msg.content === message.content
+          ) {
+            // A bit naive, but prevents the sender from getting their own message appended twice
+            return true;
+          }
+          return false;
+        });
+
+        if (exists) {
+          console.log("📥 Message already exists in UI, dropping duplicate.");
+          return prev;
+        }
+
+        console.log("📥 Adding message to UI state.");
+        return [
+          ...prev,
+          {
+            id: message.id || Math.random().toString(36).substring(7),
+            chatId: message.chatId,
+            content: message.content,
+            sender: isFromMe ? "me" : "other",
+            senderId: message.senderId,
+            timestamp: formattedTime,
+            avatar: message.senderId?.image,
+          },
+        ];
+      });
+    };
+
+    socketState.on("receive-message", handleReceiveMessage);
+    return () => {
+      socketState.off("receive-message", handleReceiveMessage);
+    };
+  }, [socketState, user?.id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({});
@@ -449,7 +492,7 @@ useEffect(() => {
   // };
 
   const normalizeChats = (chats: IChat[], currentUserId: string): Chat[] => {
-    console.log("chats,currentUserId",chats, currentUserId);
+    console.log("chats,currentUserId", chats, currentUserId);
     return chats.map((chat) => {
       const otherUser = chat.users.find(
         (u) => String(u._id) !== String(currentUserId),
@@ -473,9 +516,6 @@ useEffect(() => {
       };
     });
   };
-
-
-
 
   const fetchMessage = async (chatId: string) => {
     try {
@@ -505,8 +545,6 @@ useEffect(() => {
     };
   };
 
-
-
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedChat) return;
 
@@ -521,14 +559,14 @@ useEffect(() => {
       toast.error("Socket is not connected");
       return;
     }
-      socketState.emit("typing_stop", {
-    chatId: selectedChat,
-  });
+    socketState.emit("typing_stop", {
+      chatId: selectedChat,
+    });
     isCurrentlyTypingRef.current = false;
 
-  if (typingTimeoutRef.current) {
-    clearTimeout(typingTimeoutRef.current);
-  }
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
     try {
       setIsSending(true);
@@ -561,6 +599,21 @@ useEffect(() => {
 
       setMessages((prev) => [...prev, newUIMessage]);
       setMessageInput("");
+
+      setChattUser((prev) =>
+        prev.map((chat) =>
+          chat._id === selectedChat
+            ? {
+                ...chat,
+                lastMessage: messageInput.trim(),
+                timestamp: new Date().toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              }
+            : chat,
+        ),
+      );
     } catch (error) {
       console.error("Failed to send message", error);
     } finally {
@@ -576,63 +629,54 @@ useEffect(() => {
     }
   };
 
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isCurrentlyTypingRef = useRef(false);
 
+  const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log("value", value);
 
+    setMessageInput(value);
 
+    if (!socketState?.connected || !selectedChat) {
+      console.log("Socket not ready or no chat selected", {
+        connected: socketState?.connected,
+        selectedChat,
+      });
+      return;
+    }
 
-const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-const isCurrentlyTypingRef = useRef(false);
-
-const handleMessageChange = (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
-  const value = e.target.value;
-  console.log('value',value)
-
-  setMessageInput(value);
-
-  if (!socketState?.connected || !selectedChat) {
-    console.log("Socket not ready or no chat selected", {
+    console.log("Socket check:", {
+      socketExists: !!socketState,
       connected: socketState?.connected,
+      socketId: socketState?.id,
       selectedChat,
     });
-    return;
-  }
 
-console.log("Socket check:", {
-  socketExists: !!socketState,
-  connected: socketState?.connected,
-  socketId: socketState?.id,
-  selectedChat,
-});
+    // User starts typing
+    if (value.length > 0 && !isCurrentlyTypingRef.current) {
+      console.log("EMIT typing_start:", selectedChat);
 
-  // User starts typing
-  if (value.length > 0 && !isCurrentlyTypingRef.current) {
-    console.log("EMIT typing_start:", selectedChat);
-    
-    socketState.emit("typing_start", {chatId: selectedChat});
-    
-    console.log("EMIT typing_start 2:");
-    isCurrentlyTypingRef.current = true;
-  }
+      socketState.emit("typing_start", { chatId: selectedChat });
 
-  // Clear previous timeout
-  if (typingTimeoutRef.current) {
-    clearTimeout(typingTimeoutRef.current);
-  }
+      console.log("EMIT typing_start 2:");
+      isCurrentlyTypingRef.current = true;
+    }
 
-  // Stop typing after 1.5 seconds
-  typingTimeoutRef.current = setTimeout(() => {
-    socketState.emit("typing_stop", {
-      chatId: selectedChat,
-    });
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
-    isCurrentlyTypingRef.current = false;
-  }, 1000);
-};
+    // Stop typing after 1.5 seconds
+    typingTimeoutRef.current = setTimeout(() => {
+      socketState.emit("typing_stop", {
+        chatId: selectedChat,
+      });
 
-
-
+      isCurrentlyTypingRef.current = false;
+    }, 1000);
+  };
 
   const filteredChats = chattUser.filter((chat) =>
     chat.name?.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -645,7 +689,6 @@ console.log("Socket check:", {
     const isLoggedInUser = String(u._id) === String(currentUserId);
     return matchesSearch && !isLoggedInUser;
   });
-
 
   // ── Avatar initials helper ──
   const getInitials = (name?: string) =>
@@ -717,7 +760,11 @@ console.log("Socket check:", {
           <div className="relative flex items-center gap-1">
             {/* New chat */}
             {/* <IconArrowLeft></IconArrowLeft> */}
-            <IconArrowBack onClick={()=>navigate('/showUsers')} className="cursor-pointer" title="Back" />
+            <IconArrowBack
+              onClick={() => navigate("/showUsers")}
+              className="cursor-pointer"
+              title="Back"
+            />
             {/* Theme palette */}
 
             {/* Menu */}
@@ -786,10 +833,6 @@ console.log("Socket check:", {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.04 }}
                   onClick={() => {
-                    if (selectedChat && selectedChat !== chat._id) {
-                      socketState?.emit("leave_room", selectedChat);
-                    }
-                    socketState?.emit("join-chat", chat._id);
                     setSelectedChat(chat._id);
                     fetchMessage(chat._id);
                     // Auto-hide sidebar on mobile when chat is selected
@@ -969,18 +1012,6 @@ console.log("Socket check:", {
                   </p>
                 </div>
               </div>
-
-              {/* <div className="flex items-center gap-1">
-                <button className="rounded-xl border border-transparent p-2 text-[rgba(240,237,229,0.65)] transition hover:border-[rgba(240,237,229,0.2)] hover:bg-[#F0EDE5] hover:text-[#004643]">
-                  <IconPhone className="h-4 w-4" />
-                </button>
-                <button className="rounded-xl border border-transparent p-2 text-[rgba(240,237,229,0.65)] transition hover:border-[rgba(240,237,229,0.2)] hover:bg-[#F0EDE5] hover:text-[#004643]">
-                  <IconVideo className="h-4 w-4" />
-                </button>
-                <button className="rounded-xl border border-transparent p-2 text-[rgba(240,237,229,0.65)] transition hover:border-[rgba(240,237,229,0.2)] hover:bg-[#F0EDE5] hover:text-[#004643]">
-                  <IconDotsVertical className="h-4 w-4" />
-                </button>
-              </div> */}
             </motion.div>
 
             {/* Messages */}
@@ -1022,7 +1053,10 @@ console.log("Socket check:", {
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.03 }}
-                          className={`  ${isMe ? "justify-end" : "justify-start"}  flex w-260 mt-8`}
+                          className={`
+                           flex w-full mt-8 relative
+                           ${isMe ? "justify-end pr-10" : "justify-start"}
+                         `}
                         >
                           <div
                             className={`flex max-w-[75%] items-end gap-2 ${
@@ -1045,11 +1079,12 @@ console.log("Socket check:", {
 
                             <div className="min-w-0">
                               <div
-                                className={`rounded px-4 py-3 text-[15px] leading-6 sm:px-5 sm:py-3 sm:text-base h-7 w-[120%] ${
+                                className={`rounded px-4 py-3 text-[15px] leading-6 sm:px-5 sm:py-3 sm:text-base ${
                                   isMe
                                     ? "bg-[#235347] text-[#DAF1DE] rounded-br-md"
                                     : "bg-[#657270] text-[#DAF1DE] rounded-bl-md"
                                 }`}
+                                style={{ wordBreak: "break-word" }}
                               >
                                 {message.content}
                               </div>
@@ -1067,23 +1102,22 @@ console.log("Socket check:", {
                       );
                     })
                   )}
- {isTyping && (
-  <motion.div
-    initial={{ opacity: 0, y: 5 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0 }}
-    className="mt-3 flex items-center gap-2"
-  >
-    <div className="h-8 w-8 rounded-full bg-[#235347] flex items-center justify-center">
-      {getInitials(selectedChatData?.name)}
-    </div>
+                  {isTyping && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="mt-3 flex items-center gap-2"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-[#235347] flex items-center justify-center">
+                        {getInitials(selectedChatData?.name)}
+                      </div>
 
-    <div className="rounded-lg  px-4 py-2 text-sm text-[#DAF1DE]">
-      <p>Typing...</p>
-    </div>
-  </motion.div>
-)}
-
+                      <div className="rounded-lg  px-4 py-2 text-sm text-[#DAF1DE]">
+                        <p>Typing...</p>
+                      </div>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
                 <div ref={messagesEndRef} />
               </div>
@@ -1107,7 +1141,7 @@ console.log("Socket check:", {
                     value={messageInput}
                     onChange={handleMessageChange}
                     onKeyDown={handleKeyPress}
-                    className="w-3xl h-10 rounded-4xl  bg-[rgba(0,70,67,0.06)] py-2.5 placeholder:pl-10 pr-10 text-sm text-[#004643] placeholder:text-[rgba(0,70,67,0.5)] focus:border-[#004643] focus:outline-none focus:ring-[3px] focus:ring-[rgba(0,70,67,0.08)]"
+                    className="w-full h-10 rounded-4xl  bg-[rgba(0,70,67,0.06)] py-2.5 placeholder:pl-10 pr-10 text-sm text-[#004643] placeholder:text-[rgba(0,70,67,0.5)] focus:border-[#004643] focus:outline-none focus:ring-[3px] focus:ring-[rgba(0,70,67,0.08)]"
                   />
                   <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[rgba(0,70,67,0.55)] transition hover:text-[#004643]">
                     <IconMoodSmile className="h-4 w-4" />

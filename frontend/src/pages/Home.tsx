@@ -39,15 +39,15 @@ function SignalLine() {
 const steps = [
   {
     title: "Create your account",
-    desc: "Sign up in under a minute. No credit card, no junk email — your name and you're in.",
+    desc: "Sign up in under a minute with your name and email. Once you're in, you're ready to connect with new people.",
   },
   {
     title: "Find your people",
-    desc: "Search for friends or colleagues and start a conversation that actually matters.",
+    desc: "Search for friends or colleagues, send them a chat request, and start a conversation once they accept.",
   },
   {
     title: "Just talk",
-    desc: "Send messages in real time. It works exactly the way you expect it to.",
+    desc: "Once your request is accepted, start chatting instantly. Send and receive messages in real time and keep the conversation going.",
   },
 ];
 

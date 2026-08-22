@@ -4,7 +4,10 @@ let socket: Socket | null = null;
 
 export const connectSocket = (token: string) => {
   // Don't create multiple connections
-  if (socket?.connected) {
+  if (socket) {
+    if (!socket.connected) {
+      socket.connect();
+    }
     return socket;
   }
 
