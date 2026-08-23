@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const chat_controllers_1 = require("../controllers/implementations/chat.controllers");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const chatRouter = (0, express_1.Router)();
+chatRouter.get("/users", auth_middleware_1.verifyAccessToken, chat_controllers_1.chatControllers.getUsers.bind(chat_controllers_1.chatControllers));
+chatRouter.post("/create", auth_middleware_1.verifyAccessToken, chat_controllers_1.chatControllers.chatUsers.bind(chat_controllers_1.chatControllers));
+chatRouter.get("/chatData/:chatId", auth_middleware_1.verifyAccessToken, chat_controllers_1.chatControllers.getChatUsers.bind(chat_controllers_1.chatControllers));
+chatRouter.get("/all", auth_middleware_1.verifyAccessToken, chat_controllers_1.chatControllers.getAllChats.bind(chat_controllers_1.chatControllers));
+chatRouter.post("/request", auth_middleware_1.verifyAccessToken, chat_controllers_1.chatControllers.sendRequest.bind(chat_controllers_1.chatControllers));
+chatRouter.get("/request", auth_middleware_1.verifyAccessToken, chat_controllers_1.chatControllers.getPendingRequests.bind(chat_controllers_1.chatControllers));
+chatRouter.get("/request/received", auth_middleware_1.verifyAccessToken, chat_controllers_1.chatControllers.getReceivedRequests.bind(chat_controllers_1.chatControllers));
+chatRouter.patch("/request/:requestId/accept", auth_middleware_1.verifyAccessToken, chat_controllers_1.chatControllers.acceptRequest.bind(chat_controllers_1.chatControllers));
+// chatRouter.patch("/request/:requestId/reject", verifyAccessToken, chatControllers.rejectRequest.bind(chatControllers));
+exports.default = chatRouter;

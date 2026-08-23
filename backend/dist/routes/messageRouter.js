@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const messages_controllers_1 = require("../controllers/implementations/messages.controllers");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const messageRouter = (0, express_1.Router)();
+console.log('messageRouter');
+messageRouter.post("/send", auth_middleware_1.verifyAccessToken, messages_controllers_1.messagecontrollers.sendMessage.bind(messages_controllers_1.messagecontrollers));
+messageRouter.get("/findUser/:chatId", auth_middleware_1.verifyAccessToken, messages_controllers_1.messagecontrollers.findUser.bind(messages_controllers_1.messagecontrollers));
+exports.default = messageRouter;
