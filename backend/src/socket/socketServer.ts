@@ -10,7 +10,7 @@ export const initSocketServer = (
 ): Server => {
   io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: "https://chat-app-beige-one-42.vercel.app",
       methods: ["GET", "POST", "PATCH"],
       credentials: true,
     },
