@@ -30,7 +30,7 @@ connectDB();
 
 app.use(
   cors({
-    origin: "https://chat-app-cmrb.vercel.app/",
+    origin: "https://chat-app-cmrb.vercel.app",
     credentials: true,
   })
 );
