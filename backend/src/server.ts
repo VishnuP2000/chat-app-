@@ -24,13 +24,13 @@ const httpServer = http.createServer(app);
 
 connectDB();
 
-const allowedOrigins = [
-  "https://chat-app-beige-one-42.vercel.app",
-];
+// const allowedOrigins = [
+//   "https://chat-app-beige-one-42.vercel.app",
+// ];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: "https://chat-app-cmrb.vercel.app/",
     credentials: true,
   })
 );
