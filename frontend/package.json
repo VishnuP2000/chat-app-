@@ -17,9 +17,11 @@
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.4.0"
   },
-  "scripts": {
-    "dev": "vite"
-  },
+ "scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview"
+},
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",

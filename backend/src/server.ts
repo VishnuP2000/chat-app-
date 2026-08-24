@@ -25,7 +25,6 @@ const httpServer = http.createServer(app);
 connectDB();
 
 const allowedOrigins = [
-  "http://localhost:5173",
   "https://chat-app-beige-one-42.vercel.app",
 ];
 

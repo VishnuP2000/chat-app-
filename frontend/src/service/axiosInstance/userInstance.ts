@@ -6,7 +6,7 @@ const API_URL = import.meta.env.VITE_USER_BASE_URL;
 
 // ---------------- Public instance (no access token needed) ----------------
 export const publicAxios = axios.create({
-  baseURL: "http://localhost:4000",
+  baseURL: API_URL,
   withCredentials: true, // send cookies (refresh token)
 });
 console.log('API_URL',API_URL)
