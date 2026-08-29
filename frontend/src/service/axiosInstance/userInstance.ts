@@ -2,7 +2,7 @@ import axios from "axios";
 
 
 
-const API_URL = import.meta.env.VITE_USER_BASE_URL;
+const API_URL = import.meta.env.USER_BASE_URL;
 
 // ---------------- Public instance (no access token needed) ----------------
 export const publicAxios = axios.create({

@@ -10,7 +10,7 @@ export const initSocketServer = (
 ): Server => {
   io = new Server(httpServer, {
     cors: {
-      origin: "https://chat-app-cmrb.vercel.app",
+      origin: process.env.CLIENT_URL,
       methods: ["GET", "POST", "PATCH"],
       credentials: true,
     },
