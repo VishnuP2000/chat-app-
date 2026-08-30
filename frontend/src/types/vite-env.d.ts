@@ -1,5 +1,5 @@
 interface ImportMetaEnv {
-  readonly USER_BASE_URL: string;
+  readonly VITE_USER_BASE_URL: string;
 }
 
 interface ImportMeta {
