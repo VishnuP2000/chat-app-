@@ -66,12 +66,13 @@ function LoginPage(): JSX.Element {
       setIsLoading(true);
       const payload = { email: form.email, password: form.password };
       const response = await signInRequest(payload);
-      const { accessToken, user } = response.data;
+      // const { accessToken, user } = response.data;
+      const { accessToken } = response.data;
       console.log("response", response.data.user);
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("userId", user.id);
+      // localStorage.setItem("userId", user.id);
       setUser(response.data.user);
-      console.log("userId", user.id);
+      // console.log("userId", user.id);
       if (response.data.success) {
         navigate("/showUsers", { replace: true });
       } else toast.error(response.data.message || "Invalid credentials");
