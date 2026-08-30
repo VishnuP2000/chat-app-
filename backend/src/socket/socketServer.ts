@@ -5,12 +5,15 @@ import { registerSocketEvents } from "./socketEvents";
 
 export let io: Server;
 
-export const initSocketServer = (
-  httpServer: HttpServer
-): Server => {
+export const initSocketServer = ( httpServer: HttpServer): Server => {
+  const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+].filter((origin): origin is string => Boolean(origin));
+
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL,
+      origin: allowedOrigins,
       methods: ["GET", "POST", "PATCH"],
       credentials: true,
     },

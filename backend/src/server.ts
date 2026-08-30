@@ -24,13 +24,16 @@ const httpServer = http.createServer(app);
 
 connectDB();
 
-// const allowedOrigins = [
-//   "https://chat-app-beige-one-42.vercel.app",
-// ];
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+].filter((origin): origin is string => Boolean(origin));
+
+console.log("Allowed Origins:", allowedOrigins);
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -51,6 +54,7 @@ app.use((req: Request, res: Response) => {
 });
 // SOCKET.IO
 import { initSocketServer } from "./socket/socketServer";
+import { string } from "zod";
 console.log('initSocketServer server.js start')
 initSocketServer(httpServer);
 console.log('initSocketServer server.js end')

@@ -11,7 +11,7 @@ export const connectSocket = (token: string) => {
     return socket;
   }
 
-  socket = io(import.meta.env.USER_BASE_URL, {
+  socket = io(import.meta.env.VITE_USER_BASE_URL, {
     auth: {
       token,
     },
