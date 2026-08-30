@@ -4,7 +4,7 @@ import React, { JSX, useState } from "react";
 import { Input } from "../components/ui/input";
 import { cn } from "@/lib/utils";
 import { IconBrandGoogle, IconEye, IconEyeOff } from "@tabler/icons-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion, AnimatePresence } from "framer-motion";
@@ -361,15 +361,15 @@ function LoginPage(): JSX.Element {
             style={{ color: "rgba(142, 182, 155, 0.7)" }}
           >
             Don't have an account?{" "}
-            <a
-              href="/sign-up"
+            <Link
+              to="/sign-up"
               className="font-semibold transition"
               style={{ color: "#8EB69B" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#DAF1DE")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#8EB69B")}
             >
               Create one
-            </a>
+            </Link>
           </motion.p>
         </motion.div>
       </main>

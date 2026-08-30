@@ -17,7 +17,7 @@ export const generateAccessToken = (userID: object): string => {
   }
     // return jwt.sign({  user:{ id:decoded.user.id} }, secret_key, { expiresIn: "15m" });
 
-  return jwt.sign({id:userID}, secret_key, { expiresIn: "15s" });
+  return jwt.sign({id:userID}, secret_key, { expiresIn: "15m" });
 };
 
 /**
