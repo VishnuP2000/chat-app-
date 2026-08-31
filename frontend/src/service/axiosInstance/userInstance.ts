@@ -1,63 +1,73 @@
 import axios from "axios";
 
-
-
 const API_URL = import.meta.env.VITE_USER_BASE_URL;
-console.log('API_URL 1',API_URL)
 
-// ---------------- Public instance (no access token needed) ----------------
+console.log("API_URL:", API_URL);
+
+// ---------------- Public Axios ----------------
+// Used for login, signup, refresh-token, etc.
 export const publicAxios = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // send cookies (refresh token)
+  withCredentials: true,
 });
-console.log('API_URL',API_URL)
 
-// ---------------- User instance (needs access token) ----------------
+// ---------------- Private Axios ----------------
+// Cookies are automatically sent with every request.
 export const privateAxios = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
 
-// ---------------- Request Interceptor ----------------
-privateAxios.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  console.log('UserInstance accestoken',token)
-  if (token) {
-    console.log('usersInstance token',token)
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// ------------------------------------------------
+// Refresh token handling
+// ------------------------------------------------
 
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
 
-const onRefreshed = (token: string) => {
-  refreshSubscribers.map((callback) => callback(token));
+let refreshSubscribers: (() => void)[] = [];
+
+const onRefreshed = () => {
+  refreshSubscribers.forEach((callback) => callback());
   refreshSubscribers = [];
 };
 
-const addRefreshSubscriber = (callback: (token: string) => void) => {
+const addRefreshSubscriber = (callback: () => void) => {
   refreshSubscribers.push(callback);
 };
 
-// ---------------- Response Interceptor ----------------
-privateAxios.interceptors.response.use((response) => response,async (error) => {
-    const originalRequest = error.config;
-    console.log('originalRequest',originalRequest)
+// ------------------------------------------------
+// Response Interceptor
+// ------------------------------------------------
 
-    // Prevent infinite loop
-    if (originalRequest.url.includes("refresh-token")) {
+privateAxios.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+
+  async (error) => {
+    const originalRequest = error.config;
+
+    console.log("Axios error:", error);
+
+    // No request config
+    if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    // Access token expired → get new one using refresh token cookie
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log('error.response?.status')
+    // Don't try to refresh the refresh-token request itself
+    if (originalRequest.url?.includes("/user/refresh-token")) {
+      return Promise.reject(error);
+    }
+
+    // Access token expired
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry
+    ) {
+      // Another request is already refreshing
       if (isRefreshing) {
         return new Promise((resolve) => {
-          addRefreshSubscriber((token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+          addRefreshSubscriber(() => {
             resolve(privateAxios(originalRequest));
           });
         });
@@ -67,40 +77,47 @@ privateAxios.interceptors.response.use((response) => response,async (error) => {
       isRefreshing = true;
 
       try {
-        console.log('enter newAccessToken')
-        const newAccessToken = await refreshAccessToken();
+        console.log("Refreshing access token...");
 
-        // Save new access token
-        localStorage.setItem("accessToken", newAccessToken);
+        // Backend reads refreshToken cookie
+        // and creates a new accessToken cookie.
+        await refreshAccessToken();
 
         isRefreshing = false;
-        onRefreshed(newAccessToken);
 
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        onRefreshed();
+
+        // Retry original request.
+        // Browser automatically sends new accessToken cookie.
         return privateAxios(originalRequest);
 
-      } catch (err) {
+      } catch (refreshError) {
+        console.log("Refresh token failed:", refreshError);
+
         isRefreshing = false;
         refreshSubscribers = [];
-        localStorage.removeItem("accessToken");
-        return Promise.reject(err);
+
+        return Promise.reject(refreshError);
       }
     }
-    console.log('this is userInstance response')
 
     return Promise.reject(error);
   }
 );
 
-// ---------------- Refresh Token Function ----------------
+// ------------------------------------------------
+// Refresh Access Token
+// ------------------------------------------------
+
 const refreshAccessToken = async () => {
-  console.log('enter refreshToken')
-  const res = await publicAxios.post(
+  console.log("Calling refresh-token endpoint...");
+
+  const response = await publicAxios.post(
     "/user/refresh-token",
-    {},
-    { withCredentials: true }
+    {}
   );
 
-  return res.data.accessToken; // backend returns { accessToken }
+  console.log("Refresh response:", response.data);
+
+  return response.data;
 };

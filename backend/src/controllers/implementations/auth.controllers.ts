@@ -120,6 +120,35 @@ return res.status(200).json({
       });
     }
   }
+  async getCurrentUser(req: Request, res: Response): Promise<Response> {
+  try {
+    const token = req.cookies.accessToken;
+
+    if (!token) {
+      
+      return res.status(401).json({
+        success: false,
+        message: "Not authenticated",
+      });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN!
+    ) as { id: string };
+
+    return res.status(200).json({
+      success: true,
+      userId: decoded.id,
+    });
+
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired access token",
+    });
+  }
+}
 }
 
 export const authControllers = Container.get(AuthControllers);

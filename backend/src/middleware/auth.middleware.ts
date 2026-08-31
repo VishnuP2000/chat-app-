@@ -24,11 +24,15 @@ export const verifyAccessToken = (
       throw new AppError("Access token missing", 401);
     }
 
-    const token = authHeader.split(" ")[1];
+    // const token = authHeader.split(" ")[1];
+    const token = req.cookies.accessToken;
 
     if (!token) {
-      return res.status(401);
-    }
+  return res.status(401).json({
+    success: false,
+    message: "Access token missing",
+  });
+}
 
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!,) as jwt.JwtPayload;
 
