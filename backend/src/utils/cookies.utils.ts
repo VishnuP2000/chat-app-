@@ -1,10 +1,7 @@
 import { Response } from "express";
 
-export const setCookies = (
-  res: Response,
-  type: "accessToken" | "refreshToken",
-  token: string
-) => {
+export const setCookies = ( res: Response,type: "accessToken" | "refreshToken",token: string) => {
+  console.log('setCookies')
   const isProduction = process.env.NODE_ENV === "production";
 
   res.cookie(type, token, {

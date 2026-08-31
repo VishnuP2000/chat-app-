@@ -122,8 +122,9 @@ return res.status(200).json({
   }
   async getCurrentUser(req: Request, res: Response): Promise<Response> {
   try {
+    console.log('token in getCurrentUser ')
     const token = req.cookies.accessToken;
-
+    console.log('token in getCurrentUser',token)
     if (!token) {
       
       return res.status(401).json({
@@ -131,11 +132,12 @@ return res.status(200).json({
         message: "Not authenticated",
       });
     }
-
+    
     const decoded = jwt.verify(
       token,
       process.env.ACCESS_TOKEN!
     ) as { id: string };
+    console.log('decoded in getCurrentUser',decoded)
 
     return res.status(200).json({
       success: true,

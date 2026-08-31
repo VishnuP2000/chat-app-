@@ -37,7 +37,13 @@ export const signInRequest = async (formData: object) => {
 };
 
 export const getCurrentUser = async () => {
-  const response = await privateAxios.get("/user/me");
-  return response.data;
+  try {
+    const response = await privateAxios.get("/user/me");
+    return handleResponse(response.data, "Error in protected route request");
+  // return response.data;
+  } catch (error) {
+    console.log('protected router errror ',error)
+    handleError(error);
+  }
 };
 
