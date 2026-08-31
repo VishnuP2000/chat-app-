@@ -8,9 +8,9 @@ dotenv.config()
  * @param user - user object (must include id)
  * @returns Signed JWT access token
  */
-export const generateAccessToken = (userID: object): string => {
+export const generateAccessToken = (userID: string): string => {
   console.log('UserID',userID)
-  const secret_key = process.env.ACCESS_TOKEN!;
+  const secret_key = process.env.ACCESS_TOKEN;
 
   if (!secret_key) {
     throw new Error("ACCESS_TOKEN secret key is missing in environment variables");
@@ -25,7 +25,7 @@ export const generateAccessToken = (userID: object): string => {
  * @param user - user object (must include id)
  * @returns Signed JWT refresh token
  */
-export const generateRefreshToken = (user: object): string => {
+export const generateRefreshToken = (user: string): string => {
   const refresh_key = process.env.REFRESH_TOKEN;
 
   if (!refresh_key) {

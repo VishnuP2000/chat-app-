@@ -10,6 +10,7 @@ import { HttpStatus } from "../../enum/httpStatus";
 import { setCookies } from "../../utils/cookies.utils";
 import { AppError } from "../../utils/customError";
 import jwt from "jsonwebtoken";
+import { generateAccessToken } from "../../utils/jwt";
 
 @Service()
 export class AuthControllers {
@@ -64,6 +65,7 @@ export class AuthControllers {
       const response = await this.authService.signIn({ email, password });
 
       console.log("response auth.controller", response);
+      setCookies(res, "accessToken", String(response.accessToken));
       setCookies(res, "refreshToken", String(response.refreshToken));
 
       console.log("suceeeeeeeeee");
@@ -71,7 +73,6 @@ export class AuthControllers {
       return res.status(HttpStatus.OK).json({
         success: true,
         message: "Sign in successfully completed",
-        accessToken: response.accessToken,
         user: response.user,
       });
     } catch (error) {
@@ -97,19 +98,19 @@ export class AuthControllers {
         throw new AppError("Refresh token missing", 401);
       }
 
-      const decoded = jwt.verify(token, process.env.REFRESH_TOKEN!) as any;
-      console.log("decoded", decoded);
-      const newAccessToken = jwt.sign(
-        {
-          user: {
-            id: decoded.user.id,
-          },
-        },
-        process.env.ACCESS_TOKEN!,
-        { expiresIn: "15m" },
-      );
+const decoded = jwt.verify(
+  token,
+  process.env.REFRESH_TOKEN!
+) as { id: string };
 
-      return res.status(200).json({ accessToken: newAccessToken });
+const newAccessToken = generateAccessToken(decoded.id);
+
+setCookies(res, "accessToken", newAccessToken);
+
+return res.status(200).json({
+  success: true,
+  message: "Access token refreshed",
+});
     } catch (error) {
       console.error("Refresh token error:", error);
 

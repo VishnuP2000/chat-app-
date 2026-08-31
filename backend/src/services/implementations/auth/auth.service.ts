@@ -91,8 +91,11 @@ export class AuthService implements IAuthService {
       if (!comparePassword) {
         throw new AppError("invalide password", HttpStatus.BAD_REQUEST);
       }
-      const accessToken = generateAccessToken({ id: exist._id });
-      const refreshToken = generateRefreshToken({ id: exist._id });
+      // const accessToken = generateAccessToken({ id: exist._id });
+      const accessToken = generateAccessToken(exist.id);
+      // const refreshToken = generateRefreshToken({ id: exist._id });
+      const refreshToken = generateRefreshToken(exist.id);
+      
       console.log("exist",exist);
       return {
         success: true,

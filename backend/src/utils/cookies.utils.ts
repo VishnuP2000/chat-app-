@@ -1,13 +1,20 @@
 import { Response } from "express";
-export const setCookies=(res:Response,type:string,token:string)=>{
+
+export const setCookies = (
+  res: Response,
+  type: "accessToken" | "refreshToken",
+  token: string
+) => {
   const isProduction = process.env.NODE_ENV === "production";
 
-  res.cookie("refreshToken", token, {
+  res.cookie(type, token, {
     httpOnly: true,
-    secure: isProduction,                       // true in prod (requires HTTPS)
-    sameSite: isProduction ? "none" : "lax",     // "none" needed for cross-site in prod
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+
+    maxAge:
+      type === "accessToken"
+        ? 15 * 60 * 1000       // 15 minutes
+        : 7 * 24 * 60 * 60 * 1000, // 7 days
   });
-
-
-}
+};
