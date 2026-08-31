@@ -11,4 +11,5 @@ console.log('second');
 userRouter.post("/signUp", Multer_1.default.single("image"), auth_controllers_1.authControllers.signUp.bind(auth_controllers_1.authControllers));
 userRouter.post("/signIn", auth_controllers_1.authControllers.signIn.bind(auth_controllers_1.authControllers));
 userRouter.post("/refresh-token", auth_controllers_1.authControllers.refreshToken.bind(auth_controllers_1.authControllers));
+userRouter.get("/me", auth_controllers_1.authControllers.getCurrentUser.bind(auth_controllers_1.authControllers));
 exports.default = userRouter;

@@ -47,7 +47,17 @@ app.use("/user", userRouter);
 app.use("/chat", chatRouter);
 app.use("/message", messageRouter);
 
+app.get("/test", (req: Request, res: Response) => {
+  console.log("🔥 TEST ROUTE HIT");
+
+  return res.json({
+    success: true,
+    message: "Server is working",
+  });
+});
+
 app.use((req: Request, res: Response) => {
+  console.log("❌ 404:", req.method, req.originalUrl);
   res.status(404).json({
     message: "Route does not exist",
   });

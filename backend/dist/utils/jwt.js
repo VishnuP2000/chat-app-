@@ -19,7 +19,7 @@ const generateAccessToken = (userID) => {
         throw new Error("ACCESS_TOKEN secret key is missing in environment variables");
     }
     // return jwt.sign({  user:{ id:decoded.user.id} }, secret_key, { expiresIn: "15m" });
-    return jsonwebtoken_1.default.sign({ id: userID }, secret_key, { expiresIn: "15s" });
+    return jsonwebtoken_1.default.sign({ id: userID }, secret_key, { expiresIn: "15m" });
 };
 exports.generateAccessToken = generateAccessToken;
 /**

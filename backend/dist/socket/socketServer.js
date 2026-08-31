@@ -8,9 +8,13 @@ const socket_io_1 = require("socket.io");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const socketEvents_1 = require("./socketEvents");
 const initSocketServer = (httpServer) => {
+    const allowedOrigins = [
+        process.env.CLIENT_URL,
+        "http://localhost:5173",
+    ].filter((origin) => Boolean(origin));
     exports.io = new socket_io_1.Server(httpServer, {
         cors: {
-            origin: "http://localhost:5173",
+            origin: allowedOrigins,
             methods: ["GET", "POST", "PATCH"],
             credentials: true,
         },

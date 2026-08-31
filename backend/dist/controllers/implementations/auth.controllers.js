@@ -56,6 +56,7 @@ const httpStatus_1 = require("../../enum/httpStatus");
 const cookies_utils_1 = require("../../utils/cookies.utils");
 const customError_1 = require("../../utils/customError");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const jwt_1 = require("../../utils/jwt");
 let AuthControllers = class AuthControllers {
     constructor(authService) {
         this.authService = authService;
@@ -104,12 +105,12 @@ let AuthControllers = class AuthControllers {
             }
             const response = await this.authService.signIn({ email, password });
             console.log("response auth.controller", response);
+            (0, cookies_utils_1.setCookies)(res, "accessToken", String(response.accessToken));
             (0, cookies_utils_1.setCookies)(res, "refreshToken", String(response.refreshToken));
             console.log("suceeeeeeeeee");
             return res.status(httpStatus_1.HttpStatus.OK).json({
                 success: true,
                 message: "Sign in successfully completed",
-                accessToken: response.accessToken,
                 user: response.user,
             });
         }
@@ -135,19 +136,43 @@ let AuthControllers = class AuthControllers {
                 throw new customError_1.AppError("Refresh token missing", 401);
             }
             const decoded = jsonwebtoken_1.default.verify(token, process.env.REFRESH_TOKEN);
-            console.log("decoded", decoded);
-            const newAccessToken = jsonwebtoken_1.default.sign({
-                user: {
-                    id: decoded.user.id,
-                },
-            }, process.env.ACCESS_TOKEN, { expiresIn: "15m" });
-            return res.status(200).json({ accessToken: newAccessToken });
+            const newAccessToken = (0, jwt_1.generateAccessToken)(decoded.id);
+            (0, cookies_utils_1.setCookies)(res, "accessToken", newAccessToken);
+            return res.status(200).json({
+                success: true,
+                message: "Access token refreshed",
+            });
         }
         catch (error) {
             console.error("Refresh token error:", error);
             return res.status(401).json({
                 message: "Invalid refresh token",
                 error,
+            });
+        }
+    }
+    async getCurrentUser(req, res) {
+        try {
+            console.log('token in getCurrentUser ');
+            const token = req.cookies.accessToken;
+            console.log('token in getCurrentUser', token);
+            if (!token) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Not authenticated",
+                });
+            }
+            const decoded = jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN);
+            console.log('decoded in getCurrentUser', decoded);
+            return res.status(200).json({
+                success: true,
+                userId: decoded.id,
+            });
+        }
+        catch (error) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid or expired access token",
             });
         }
     }

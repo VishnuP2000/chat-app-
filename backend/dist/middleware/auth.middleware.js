@@ -15,9 +15,13 @@ const verifyAccessToken = (req, res, next) => {
             console.log('Access token missing');
             throw new customError_1.AppError("Access token missing", 401);
         }
-        const token = authHeader.split(" ")[1];
+        // const token = authHeader.split(" ")[1];
+        const token = req.cookies.accessToken;
         if (!token) {
-            return res.status(401);
+            return res.status(401).json({
+                success: false,
+                message: "Access token missing",
+            });
         }
         const decoded = jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN);
         const userId = decoded.user.id;

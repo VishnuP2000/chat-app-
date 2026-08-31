@@ -16,13 +16,13 @@ export const verifyAccessToken = (
   next: NextFunction,
 ) => {
   try {
-    const authHeader = req.headers.authorization;
-    console.log("authMiddleware", authHeader);
+    // const authHeader = req.headers.authorization;
+    // console.log("authMiddleware", authHeader);
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.log('Access token missing')
-      throw new AppError("Access token missing", 401);
-    }
+    // if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    //   console.log('Access token missing')
+    //   throw new AppError("Access token missing", 401);
+    // }
 
     // const token = authHeader.split(" ")[1];
     const token = req.cookies.accessToken;

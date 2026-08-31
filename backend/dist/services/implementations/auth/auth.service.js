@@ -107,8 +107,10 @@ let AuthService = class AuthService {
             if (!comparePassword) {
                 throw new customError_1.AppError("invalide password", httpStatus_1.HttpStatus.BAD_REQUEST);
             }
-            const accessToken = (0, jwt_1.generateAccessToken)({ id: exist._id });
-            const refreshToken = (0, jwt_1.generateRefreshToken)({ id: exist._id });
+            // const accessToken = generateAccessToken({ id: exist._id });
+            const accessToken = (0, jwt_1.generateAccessToken)(exist.id);
+            // const refreshToken = generateRefreshToken({ id: exist._id });
+            const refreshToken = (0, jwt_1.generateRefreshToken)(exist.id);
             console.log("exist", exist);
             return {
                 success: true,
