@@ -65,8 +65,8 @@ export class AuthControllers {
       const response = await this.authService.signIn({ email, password });
 
       console.log("response auth.controller", response);
-      setCookies(res, "accessToken", String(response.accessToken));
-      setCookies(res, "refreshToken", String(response.refreshToken));
+      setCookies(res, "accessToken", response.accessToken!);
+      setCookies(res, "refreshToken", response.refreshToken!);
 
       console.log("suceeeeeeeeee");
 

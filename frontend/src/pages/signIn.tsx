@@ -67,9 +67,9 @@ function LoginPage(): JSX.Element {
       const payload = { email: form.email, password: form.password };
       const response = await signInRequest(payload);
       // const { accessToken, user } = response.data;
-      const { accessToken } = response.data;
+      // const { accessToken } = response.data;
       console.log("response", response.data.user);
-      localStorage.setItem("accessToken", accessToken);
+      // localStorage.setItem("accessToken", accessToken);
       // localStorage.setItem("userId", user.id);
       setUser(response.data.user);
       // console.log("userId", user.id);

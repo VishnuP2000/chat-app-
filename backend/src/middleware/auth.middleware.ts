@@ -36,8 +36,8 @@ export const verifyAccessToken = (
 
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!,) as jwt.JwtPayload;
 
-    const userId = decoded.user.id;
-    req.user = { id: userId };
+    const userId = decoded.id;
+    req.user = { id: String(userId) };
     // req.user = { id: decoded.user.id };
     console.log("complate the middlware");
     next();
