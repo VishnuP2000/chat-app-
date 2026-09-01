@@ -65,17 +65,15 @@ export class AuthControllers {
       const response = await this.authService.signIn({ email, password });
 
       console.log("response auth.controller", response);
-setCookies(
-  res,
-  String(response.accessToken),
-  String(response.refreshToken)
-);
+// Only set refreshToken in HTTP-only cookie; return accessToken in response body
+setCookies(res, String(response.refreshToken));
 
       console.log("suceeeeeeeeee");
 
       return res.status(HttpStatus.OK).json({
         success: true,
         message: "Sign in successfully completed",
+        accessToken: response.accessToken,
         user: response.user,
       });
     } catch (error) {
@@ -108,11 +106,13 @@ const decoded = jwt.verify(
 
 const newAccessToken = generateAccessToken(decoded.user);
 
-setCookies(res, newAccessToken, token);
+// Keep refreshToken cookie alive; return new accessToken in body
+setCookies(res, token);
 
 return res.status(200).json({
   success: true,
   message: "Access token refreshed",
+  accessToken: newAccessToken,
 });
     } catch (error) {
       console.error("Refresh token error:", error);
@@ -125,22 +125,22 @@ return res.status(200).json({
   }
   async getCurrentUser(req: Request, res: Response): Promise<Response> {
   try {
-    console.log('token in getCurrentUser ')
-    const token = req.cookies.accessToken;
-    console.log('token in getCurrentUser',token)
-    if (!token) {
-      
+    // accessToken is now in Authorization: Bearer header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
         message: "Not authenticated",
       });
     }
-    
+
+    const token = authHeader.split(" ")[1];
+
     const decoded = jwt.verify(
       token,
       process.env.ACCESS_TOKEN!
     ) as { id: string };
-    console.log('decoded in getCurrentUser',decoded)
+    console.log('decoded in getCurrentUser', decoded);
 
     return res.status(200).json({
       success: true,

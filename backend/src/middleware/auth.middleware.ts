@@ -13,23 +13,22 @@ export const verifyAccessToken = (
   next: NextFunction,
 ) => {
   try {
-    const token = req.cookies.accessToken;
+    // accessToken is now sent via Authorization: Bearer header
+    const authHeader = req.headers.authorization;
 
-    console.log("authMiddleware token:", token ? "present" : "missing");
-
-    if (!token) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
         message: "Access token missing",
       });
     }
 
+    const token = authHeader.split(" ")[1];
+
     const decoded = jwt.verify(
       token,
       process.env.ACCESS_TOKEN!
     ) as jwt.JwtPayload;
-
-    console.log("Decoded token:", decoded);
 
     const userId = decoded.id;
 
@@ -43,8 +42,6 @@ export const verifyAccessToken = (
     req.user = {
       id: String(userId),
     };
-
-    console.log("Authenticated user:", req.user);
 
     next();
 

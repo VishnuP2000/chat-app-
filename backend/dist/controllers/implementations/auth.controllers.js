@@ -105,11 +105,13 @@ let AuthControllers = class AuthControllers {
             }
             const response = await this.authService.signIn({ email, password });
             console.log("response auth.controller", response);
-            (0, cookies_utils_1.setCookies)(res, String(response.accessToken), String(response.refreshToken));
+            // Only set refreshToken in HTTP-only cookie; return accessToken in response body
+            (0, cookies_utils_1.setCookies)(res, String(response.refreshToken));
             console.log("suceeeeeeeeee");
             return res.status(httpStatus_1.HttpStatus.OK).json({
                 success: true,
                 message: "Sign in successfully completed",
+                accessToken: response.accessToken,
                 user: response.user,
             });
         }
@@ -136,10 +138,12 @@ let AuthControllers = class AuthControllers {
             }
             const decoded = jsonwebtoken_1.default.verify(token, process.env.REFRESH_TOKEN);
             const newAccessToken = (0, jwt_1.generateAccessToken)(decoded.user);
-            (0, cookies_utils_1.setCookies)(res, newAccessToken, token);
+            // Keep refreshToken cookie alive; return new accessToken in body
+            (0, cookies_utils_1.setCookies)(res, token);
             return res.status(200).json({
                 success: true,
                 message: "Access token refreshed",
+                accessToken: newAccessToken,
             });
         }
         catch (error) {
@@ -152,15 +156,15 @@ let AuthControllers = class AuthControllers {
     }
     async getCurrentUser(req, res) {
         try {
-            console.log('token in getCurrentUser ');
-            const token = req.cookies.accessToken;
-            console.log('token in getCurrentUser', token);
-            if (!token) {
+            // accessToken is now in Authorization: Bearer header
+            const authHeader = req.headers.authorization;
+            if (!authHeader || !authHeader.startsWith("Bearer ")) {
                 return res.status(401).json({
                     success: false,
                     message: "Not authenticated",
                 });
             }
+            const token = authHeader.split(" ")[1];
             const decoded = jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN);
             console.log('decoded in getCurrentUser', decoded);
             return res.status(200).json({

@@ -7,16 +7,16 @@ exports.verifyAccessToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const verifyAccessToken = (req, res, next) => {
     try {
-        const token = req.cookies.accessToken;
-        console.log("authMiddleware token:", token ? "present" : "missing");
-        if (!token) {
+        // accessToken is now sent via Authorization: Bearer header
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return res.status(401).json({
                 success: false,
                 message: "Access token missing",
             });
         }
+        const token = authHeader.split(" ")[1];
         const decoded = jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN);
-        console.log("Decoded token:", decoded);
         const userId = decoded.id;
         if (!userId) {
             return res.status(401).json({
@@ -27,7 +27,6 @@ const verifyAccessToken = (req, res, next) => {
         req.user = {
             id: String(userId),
         };
-        console.log("Authenticated user:", req.user);
         next();
     }
     catch (error) {
