@@ -104,11 +104,11 @@ setCookies(
 const decoded = jwt.verify(
   token,
   process.env.REFRESH_TOKEN!
-) as { id: string };
+) as { user: string };
 
-const newAccessToken = generateAccessToken(decoded.id);
+const newAccessToken = generateAccessToken(decoded.user);
 
-setCookies(res, "accessToken", newAccessToken);
+setCookies(res, newAccessToken, token);
 
 return res.status(200).json({
   success: true,

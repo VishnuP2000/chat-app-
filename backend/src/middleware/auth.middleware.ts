@@ -1,16 +1,21 @@
-import { Response, NextFunction } from "express";
+import { Response, NextFunction, Request } from "express";
 import jwt from "jsonwebtoken";
-import { AuthRequset } from "../Interfaces/Interfaces";
+
+export interface AuthRequest extends Request {
+  user?: {
+    id: string;
+  };
+}
 
 export const verifyAccessToken = (
-  req: AuthRequset,
+  req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const token = req.cookies.accessToken;
 
-    console.log("Access token cookie:", token);
+    console.log("authMiddleware token:", token ? "present" : "missing");
 
     if (!token) {
       return res.status(401).json({

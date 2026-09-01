@@ -105,8 +105,7 @@ let AuthControllers = class AuthControllers {
             }
             const response = await this.authService.signIn({ email, password });
             console.log("response auth.controller", response);
-            (0, cookies_utils_1.setCookies)(res, "accessToken", String(response.accessToken));
-            (0, cookies_utils_1.setCookies)(res, "refreshToken", String(response.refreshToken));
+            (0, cookies_utils_1.setCookies)(res, String(response.accessToken), String(response.refreshToken));
             console.log("suceeeeeeeeee");
             return res.status(httpStatus_1.HttpStatus.OK).json({
                 success: true,
@@ -136,8 +135,8 @@ let AuthControllers = class AuthControllers {
                 throw new customError_1.AppError("Refresh token missing", 401);
             }
             const decoded = jsonwebtoken_1.default.verify(token, process.env.REFRESH_TOKEN);
-            const newAccessToken = (0, jwt_1.generateAccessToken)(decoded.id);
-            (0, cookies_utils_1.setCookies)(res, "accessToken", newAccessToken);
+            const newAccessToken = (0, jwt_1.generateAccessToken)(decoded.user);
+            (0, cookies_utils_1.setCookies)(res, newAccessToken, token);
             return res.status(200).json({
                 success: true,
                 message: "Access token refreshed",

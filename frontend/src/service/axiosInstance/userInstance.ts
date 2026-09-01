@@ -24,14 +24,14 @@ export const privateAxios = axios.create({
 
 let isRefreshing = false;
 
-let refreshSubscribers: (() => void)[] = [];
+let refreshSubscribers: ((error: any) => void)[] = [];
 
-const onRefreshed = () => {
-  refreshSubscribers.forEach((callback) => callback());
+const onRefreshed = (error: any = null) => {
+  refreshSubscribers.forEach((callback) => callback(error));
   refreshSubscribers = [];
 };
 
-const addRefreshSubscriber = (callback: () => void) => {
+const addRefreshSubscriber = (callback: (error: any) => void) => {
   refreshSubscribers.push(callback);
 };
 
@@ -66,8 +66,12 @@ privateAxios.interceptors.response.use(
     ) {
       // Another request is already refreshing
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          addRefreshSubscriber(() => {
+        return new Promise((resolve, reject) => {
+          addRefreshSubscriber((error: any) => {
+            if (error) {
+              return reject(error);
+            }
+            originalRequest._retry = true;
             resolve(privateAxios(originalRequest));
           });
         });
@@ -85,7 +89,7 @@ privateAxios.interceptors.response.use(
 
         isRefreshing = false;
 
-        onRefreshed();
+        onRefreshed(null);
 
         // Retry original request.
         // Browser automatically sends new accessToken cookie.
@@ -95,7 +99,7 @@ privateAxios.interceptors.response.use(
         console.log("Refresh token failed:", refreshError);
 
         isRefreshing = false;
-        refreshSubscribers = [];
+        onRefreshed(refreshError);
 
         return Promise.reject(refreshError);
       }

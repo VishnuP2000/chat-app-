@@ -1,16 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setCookies = void 0;
-const setCookies = (res, type, token) => {
-    console.log('setCookies');
+const setCookies = (res, accessToken, refreshToken) => {
     const isProduction = process.env.NODE_ENV === "production";
-    res.cookie(type, token, {
+    const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
         sameSite: isProduction ? "none" : "lax",
-        maxAge: type === "accessToken"
-            ? 15 * 60 * 1000 // 15 minutes
-            : 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+    res.cookie("accessToken", accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,
+    });
+    res.cookie("refreshToken", refreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 };
 exports.setCookies = setCookies;
